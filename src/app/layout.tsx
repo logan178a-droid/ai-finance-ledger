@@ -20,6 +20,16 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "AI Finance Ledger",
   description: "AI-native personal finance ledger for the Indian market",
+  icons: {
+    // src/app/favicon.ico is auto-served at /favicon.ico by Next.js
+    // convention; these are the additional sizes browsers/OSes pick from.
+    icon: [
+      { url: "/icons/icon-16.png", sizes: "16x16", type: "image/png" },
+      { url: "/icons/icon-32.png", sizes: "32x32", type: "image/png" },
+      { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
+    ],
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+  },
 };
 
 // Reads the session on every request (DB-backed theme lookup below) — must

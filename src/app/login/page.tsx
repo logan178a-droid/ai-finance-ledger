@@ -3,10 +3,10 @@
 import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
-import { Wallet } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
+import { Wordmark } from "@/components/branding/Wordmark";
 
 function LoginForm() {
   const router = useRouter();
@@ -39,9 +39,8 @@ function LoginForm() {
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-12">
       <Card className="w-full max-w-sm p-6 sm:p-8">
-        <div className="flex items-center gap-2 mb-6 font-semibold text-lg">
-          <Wallet size={22} className="text-accent" />
-          AI Finance Ledger
+        <div className="mb-6">
+          <Wordmark height={34} />
         </div>
         <h1 className="text-lg font-semibold mb-1">Sign in</h1>
         <p className="text-sm text-muted mb-6">Welcome back. Enter your details to continue.</p>

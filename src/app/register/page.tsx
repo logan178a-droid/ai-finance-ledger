@@ -3,10 +3,10 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
-import { Wallet } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
+import { Wordmark } from "@/components/branding/Wordmark";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -49,9 +49,8 @@ export default function RegisterPage() {
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-12">
       <Card className="w-full max-w-sm p-6 sm:p-8">
-        <div className="flex items-center gap-2 mb-6 font-semibold text-lg">
-          <Wallet size={22} className="text-accent" />
-          AI Finance Ledger
+        <div className="mb-6">
+          <Wordmark height={34} />
         </div>
         <h1 className="text-lg font-semibold mb-1">Create your account</h1>
         <p className="text-sm text-muted mb-6">Start tracking your money in plain English.</p>

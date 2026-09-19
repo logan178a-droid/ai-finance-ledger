@@ -1,0 +1,10 @@
+<svg width="720" height="160" viewBox="0 0 720 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="AI Finance Ledger">
+  <rect width="160" height="160" rx="38" fill="#F2F5FC"/>
+  <rect x="50" y="40" width="74" height="9" rx="4.5" fill="#37436B" fill-opacity="0.5"/>
+  <rect x="38" y="63" width="86" height="9" rx="4.5" fill="#37436B" fill-opacity="0.8"/>
+  <path d="M36 94 L65 121 L127 56" fill="none" stroke="#2F63D6" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M130 37 C131.6 44.8 135.2 48.4 143 50 C135.2 51.6 131.6 55.2 130 63 C128.4 55.2 124.8 51.6 117 50 C124.8 48.4 128.4 44.8 130 37 Z" fill="#7A66FF"/>
+  <text x="196" y="98" font-family="Manrope, system-ui, sans-serif" font-weight="800" font-size="52" letter-spacing="-1">
+    <tspan fill="#5B3FE0">AI</tspan><tspan fill="#101B3F"> Finance Ledger</tspan>
+  </text>
+</svg>

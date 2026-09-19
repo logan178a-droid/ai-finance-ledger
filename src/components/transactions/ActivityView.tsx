@@ -41,7 +41,9 @@ export function ActivityView() {
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const [detailed, setDetailed] = useState(false);
+  // Running balance shown by default on this page (toggle still lets the
+  // user switch to the minimal Simple view if they don't want it).
+  const [detailed, setDetailed] = useState(true);
   const [collapsedMonths, setCollapsedMonths] = useState<Set<string>>(new Set());
 
   const categoryOptions = useMemo(() => Array.from(new Set(transactions.map((t) => t.category))).sort(), [transactions]);

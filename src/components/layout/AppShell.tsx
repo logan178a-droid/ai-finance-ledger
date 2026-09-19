@@ -3,8 +3,9 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, LayoutDashboard, ArrowLeftRight, Landmark, CreditCard, Settings as SettingsIcon, Menu, X, Wallet } from "lucide-react";
+import { Home, LayoutDashboard, ArrowLeftRight, Landmark, CreditCard, Settings as SettingsIcon, Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { LogoMark } from "@/components/branding/LogoMark";
 
 // Home (the AI capture surface) is the default landing page; the full
 // overview lives one click away at /dashboard, no longer the first thing
@@ -41,7 +42,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       {/* Mobile top bar */}
       <div className="glass-strong md:hidden fixed top-0 left-0 right-0 z-30 flex items-center justify-between px-4 py-3 bg-surface-raised border-b border-border">
         <div className="flex items-center gap-2 font-semibold">
-          <Wallet size={20} className="text-accent" />
+          <LogoMark size={22} className="rounded-md" />
           AI Finance Ledger
         </div>
         <button
@@ -92,7 +93,7 @@ function SidebarContent({ pathname, onNavigate }: { pathname: string | null; onN
   return (
     <>
       <div className="hidden md:flex items-center gap-2 px-2 mb-8 font-semibold text-lg">
-        <Wallet size={22} className="text-accent" />
+        <LogoMark size={26} className="rounded-lg" />
         AI Finance Ledger
       </div>
       <nav className="flex flex-col gap-1">

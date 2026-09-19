@@ -23,8 +23,18 @@ export default function manifest(): MetadataRoute.Manifest {
     background_color: "#0a1128",
     theme_color: "#0a1128",
     icons: [
-      { src: "/api/icon-512", sizes: "512x512", type: "image/png", purpose: "any" },
-      { src: "/api/icon-512", sizes: "512x512", type: "image/png", purpose: "maskable" },
+      { src: "/icons/icon-16.png", sizes: "16x16", type: "image/png", purpose: "any" },
+      { src: "/icons/icon-32.png", sizes: "32x32", type: "image/png", purpose: "any" },
+      { src: "/icons/icon-48.png", sizes: "48x48", type: "image/png", purpose: "any" },
+      { src: "/icons/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },
+      { src: "/icons/icon-256.png", sizes: "256x256", type: "image/png", purpose: "any" },
+      { src: "/icons/icon-512.png", sizes: "512x512", type: "image/png", purpose: "any" },
+      // Separate maskable icons — Android crops "any" icons into a shape
+      // (circle, squircle, etc.) using a safe-zone it assumes exists; these
+      // are drawn with that safe margin baked in, so the mark doesn't get
+      // clipped oddly on the home screen.
+      { src: "/icons/maskable-192.png", sizes: "192x192", type: "image/png", purpose: "maskable" },
+      { src: "/icons/maskable-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
     ],
     // Android-only: iOS Safari doesn't support apps registering as Web
     // Share Targets, so this simply won't appear as a share destination on

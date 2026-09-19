@@ -1,0 +1,16 @@
+<svg width="720" height="160" viewBox="0 0 720 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="AI Finance Ledger">
+  <defs>
+    <linearGradient id="bgGrad" x1="0" y1="0" x2="160" y2="160" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#1B2E63"/>
+      <stop offset="1" stop-color="#0A1128"/>
+    </linearGradient>
+  </defs>
+  <rect width="160" height="160" rx="38" fill="url(#bgGrad)"/>
+  <rect x="50" y="40" width="74" height="9" rx="4.5" fill="#EDF1FB" fill-opacity="0.42"/>
+  <rect x="38" y="63" width="86" height="9" rx="4.5" fill="#EDF1FB" fill-opacity="0.75"/>
+  <path d="M36 94 L65 121 L127 56" fill="none" stroke="#4C86FF" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M130 37 C131.6 44.8 135.2 48.4 143 50 C135.2 51.6 131.6 55.2 130 63 C128.4 55.2 124.8 51.6 117 50 C124.8 48.4 128.4 44.8 130 37 Z" fill="#9C8CFF"/>
+  <text x="196" y="98" font-family="Manrope, system-ui, sans-serif" font-weight="800" font-size="52" letter-spacing="-1">
+    <tspan fill="#9C8CFF">AI</tspan><tspan fill="#EDF1FB"> Finance Ledger</tspan>
+  </text>
+</svg>

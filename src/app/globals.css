@@ -251,6 +251,33 @@ body::after {
    Worth, the Home AI input) — a soft diagonal accent→AI sheen traced along
    a hairline ring, sitting on top of the normal border. Implemented as a
    masked pseudo-element so it never fights the surface's own background. */
+/* Wordmark theme swap (see Wordmark.tsx) — mirrors the exact system/explicit
+   `data-theme` rules above (base = light theme; dark applies via either an
+   unoverridden system preference or an explicit data-theme="dark"), so the
+   logo picks its dark-bg vs light-bg variant the same way the rest of the
+   app resolves its theme, and never needs client-side theme detection of
+   its own. */
+.wordmark-dark-variant {
+  display: none;
+}
+.wordmark-light-variant {
+  display: inline-block;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .wordmark-dark-variant {
+    display: inline-block;
+  }
+  :root:not([data-theme="light"]) .wordmark-light-variant {
+    display: none;
+  }
+}
+:root[data-theme="dark"] .wordmark-dark-variant {
+  display: inline-block;
+}
+:root[data-theme="dark"] .wordmark-light-variant {
+  display: none;
+}
+
 .hero-ring {
   position: relative;
 }
