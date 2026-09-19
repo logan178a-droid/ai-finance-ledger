@@ -1,0 +1,6 @@
+-- AlterTable
+ALTER TABLE "CreditCard" ALTER COLUMN "issuer" SET DEFAULT '',
+ALTER COLUMN "lastFourDigits" SET DEFAULT '',
+ALTER COLUMN "creditLimit" SET DEFAULT 500000,
+ALTER COLUMN "statementDay" SET DEFAULT 1,
+ALTER COLUMN "paymentDueDay" SET DEFAULT 15;

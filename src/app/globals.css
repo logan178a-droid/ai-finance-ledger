@@ -1,0 +1,364 @@
+@import "tailwindcss";
+
+:root {
+  /* ===== LIGHT THEME — clean glass on a cool off-white base ===== */
+  --background: #f4f6fb;
+  --surface: rgba(255, 255, 255, 0.66);
+  --surface-raised: rgba(255, 255, 255, 0.82);
+  --foreground: #0f172a;
+  --muted: #5b6478;
+  --muted-soft: #8891a3;
+  --border: rgba(15, 23, 42, 0.09);
+  --border-strong: rgba(15, 23, 42, 0.16);
+
+  /* Primary accent — confident electric blue, pops against the glass surfaces */
+  --accent: #2563eb;
+  --accent-hover: #1d4ed8;
+  --accent-soft: rgba(37, 99, 235, 0.09);
+  --accent-foreground: #ffffff;
+
+  /* AI accent — exclusively for AI-sourced content. Violet/indigo. */
+  --ai: #7c3aed;
+  --ai-hover: #6d28d9;
+  --ai-soft: rgba(124, 58, 237, 0.09);
+  --ai-foreground: #ffffff;
+
+  /* Semantic (muted, AA-safe, never the sole signal) */
+  --positive: #059669;
+  --positive-soft: rgba(5, 150, 105, 0.1);
+  --negative: #dc2626;
+  --negative-soft: rgba(220, 38, 38, 0.1);
+  --warning: #b45309;
+  --warning-soft: rgba(217, 119, 6, 0.12);
+
+  --danger: #dc2626;
+  --danger-soft: rgba(220, 38, 38, 0.1);
+
+  --radius-card: 16px;
+  /* Two blur tiers give the app real depth instead of one flat blur
+     everywhere: cards sit lightly over the content; the sidebar/drawers/
+     modals — the "closer" floating layer — get a stronger blur + more
+     opaque fill so the eye reads a clear front-to-back order. */
+  --glass-blur: 16px;
+  --glass-blur-strong: 32px;
+  --glass-border-top: rgba(255, 255, 255, 0.55);
+  --shadow-rest: 0 1px 2px rgba(15, 23, 42, 0.04), inset 0 1px 0 var(--glass-border-top);
+  --shadow-hover: 0 12px 32px -4px rgba(15, 23, 42, 0.14), inset 0 1px 0 var(--glass-border-top);
+  --shadow-strong: 0 20px 60px -12px rgba(15, 23, 42, 0.18), inset 0 1px 0 var(--glass-border-top);
+
+  /* Background ambient glow blobs — very subtle on the light theme */
+  --glow-accent: rgba(37, 99, 235, 0.08);
+  --glow-ai: rgba(124, 58, 237, 0.06);
+  --glow-accent-2: rgba(37, 99, 235, 0.05);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    /* ===== DARK THEME — deep navy + glassmorphism ===== */
+    --background: #0a1128;
+    --surface: rgba(24, 38, 76, 0.5);
+    --surface-raised: rgba(32, 48, 92, 0.62);
+    --foreground: #f3f5fa;
+    --muted: #8b96b8;
+    --muted-soft: #626e8f;
+    --border: rgba(255, 255, 255, 0.1);
+    --border-strong: rgba(255, 255, 255, 0.18);
+
+    --accent: #4d84ff;
+    --accent-hover: #6b98ff;
+    --accent-soft: rgba(77, 132, 255, 0.16);
+    --accent-foreground: #06102a;
+
+    --ai: #a78bfa;
+    --ai-hover: #bda6fb;
+    --ai-soft: rgba(167, 139, 250, 0.16);
+    --ai-foreground: #150f2e;
+
+    --positive: #34d399;
+    --positive-soft: rgba(52, 211, 153, 0.14);
+    --negative: #fb7185;
+    --negative-soft: rgba(251, 113, 133, 0.14);
+    --warning: #fbbf24;
+    --warning-soft: rgba(251, 191, 36, 0.14);
+
+    --danger: #fb7185;
+    --danger-soft: rgba(251, 113, 133, 0.14);
+
+    --glass-blur: 18px;
+    --glass-blur-strong: 36px;
+    --glass-border-top: rgba(255, 255, 255, 0.1);
+    --shadow-rest: 0 1px 2px rgba(0, 0, 0, 0.3), inset 0 1px 0 var(--glass-border-top);
+    --shadow-hover: 0 16px 40px -6px rgba(0, 0, 0, 0.5), inset 0 1px 0 var(--glass-border-top);
+    --shadow-strong: 0 24px 70px -10px rgba(0, 0, 0, 0.55), inset 0 1px 0 var(--glass-border-top);
+
+    --glow-accent: rgba(77, 132, 255, 0.24);
+    --glow-ai: rgba(167, 139, 250, 0.16);
+    --glow-accent-2: rgba(77, 132, 255, 0.14);
+  }
+}
+
+:root[data-theme="dark"] {
+  --background: #0a1128;
+  --surface: rgba(24, 38, 76, 0.5);
+  --surface-raised: rgba(32, 48, 92, 0.62);
+  --foreground: #f3f5fa;
+  --muted: #8b96b8;
+  --muted-soft: #626e8f;
+  --border: rgba(255, 255, 255, 0.1);
+  --border-strong: rgba(255, 255, 255, 0.18);
+
+  --accent: #4d84ff;
+  --accent-hover: #6b98ff;
+  --accent-soft: rgba(77, 132, 255, 0.16);
+  --accent-foreground: #06102a;
+
+  --ai: #a78bfa;
+  --ai-hover: #bda6fb;
+  --ai-soft: rgba(167, 139, 250, 0.16);
+  --ai-foreground: #150f2e;
+
+  --positive: #34d399;
+  --positive-soft: rgba(52, 211, 153, 0.14);
+  --negative: #fb7185;
+  --negative-soft: rgba(251, 113, 133, 0.14);
+  --warning: #fbbf24;
+  --warning-soft: rgba(251, 191, 36, 0.14);
+
+  --danger: #fb7185;
+  --danger-soft: rgba(251, 113, 133, 0.14);
+
+  --glass-blur: 18px;
+  --glass-blur-strong: 36px;
+  --glass-border-top: rgba(255, 255, 255, 0.1);
+  --shadow-rest: 0 1px 2px rgba(0, 0, 0, 0.3), inset 0 1px 0 var(--glass-border-top);
+  --shadow-hover: 0 16px 40px -6px rgba(0, 0, 0, 0.5), inset 0 1px 0 var(--glass-border-top);
+  --shadow-strong: 0 24px 70px -10px rgba(0, 0, 0, 0.55), inset 0 1px 0 var(--glass-border-top);
+
+  --glow-accent: rgba(77, 132, 255, 0.24);
+  --glow-ai: rgba(167, 139, 250, 0.16);
+  --glow-accent-2: rgba(77, 132, 255, 0.14);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-muted-soft: var(--muted-soft);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-foreground: var(--accent-foreground);
+
+  --color-ai: var(--ai);
+  --color-ai-hover: var(--ai-hover);
+  --color-ai-soft: var(--ai-soft);
+  --color-ai-foreground: var(--ai-foreground);
+
+  --color-positive: var(--positive);
+  --color-positive-soft: var(--positive-soft);
+  --color-negative: var(--negative);
+  --color-negative-soft: var(--negative-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  color-scheme: light dark;
+  position: relative;
+  min-height: 100%;
+}
+
+/* Ambient background glow — two layered blob fields (::before nearer/larger,
+   ::after further/dimmer) behind the glass panels, giving the navy backdrop
+   real depth rather than a flat fill. Fixed + behind everything +
+   non-interactive. A very slow, subtle drift (60s+, barely perceptible)
+   adds life without ever reading as busy; fully stilled under
+   prefers-reduced-motion. Restrained opacity per theme (see --glow-* above)
+   so it reads as premium, not gamer-RGB. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: -10%;
+  z-index: -2;
+  pointer-events: none;
+  background:
+    radial-gradient(680px circle at 14% -6%, var(--glow-accent), transparent 60%),
+    radial-gradient(620px circle at 92% 16%, var(--glow-ai), transparent 55%),
+    radial-gradient(900px circle at 50% 118%, var(--glow-accent), transparent 60%);
+  animation: drift-1 75s ease-in-out infinite alternate;
+}
+body::after {
+  content: "";
+  position: fixed;
+  inset: -10%;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(760px circle at 70% 70%, var(--glow-accent-2), transparent 62%);
+  animation: drift-2 95s ease-in-out infinite alternate;
+}
+
+@keyframes drift-1 {
+  from { transform: translate3d(0, 0, 0) scale(1); }
+  to { transform: translate3d(-1.5%, 1.5%, 0) scale(1.03); }
+}
+@keyframes drift-2 {
+  from { transform: translate3d(0, 0, 0) scale(1); }
+  to { transform: translate3d(2%, -1.5%, 0) scale(1.04); }
+}
+
+* {
+  border-color: var(--border);
+}
+
+/* Glassmorphism surface — the shared frosted-panel treatment used by Card,
+   the AI input, etc. Semi-transparent tinted background (via --surface,
+   which already carries alpha) + backdrop blur + a hairline light border
+   since box-shadows alone don't read on a dark backdrop, plus a subtle
+   inner top highlight for a soft "sheen" of depth. */
+.glass {
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  box-shadow: var(--shadow-rest);
+}
+.glass-hover:hover {
+  box-shadow: var(--shadow-hover);
+}
+
+/* The "closer" floating layer — sidebar, drawers, modals — reads as
+   nearer/more solid than regular content cards: stronger blur, more opaque
+   fill (paired with bg-surface-raised), deeper shadow. */
+.glass-strong {
+  backdrop-filter: blur(var(--glass-blur-strong));
+  -webkit-backdrop-filter: blur(var(--glass-blur-strong));
+  box-shadow: var(--shadow-strong);
+}
+
+/* Gradient-ring border for the app's highest-craft "hero" surfaces (Net
+   Worth, the Home AI input) — a soft diagonal accent→AI sheen traced along
+   a hairline ring, sitting on top of the normal border. Implemented as a
+   masked pseudo-element so it never fights the surface's own background. */
+.hero-ring {
+  position: relative;
+}
+.hero-ring::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--accent) 55%, transparent) 0%,
+    transparent 35%,
+    transparent 65%,
+    color-mix(in srgb, var(--ai) 50%, transparent) 100%
+  );
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* Money / numeric figures must always use tabular numerals */
+.tnum,
+.money {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+/* Typography scale — confident, tight-tracked hero numbers (Net Worth,
+   captured amounts) sit at the top; clear weight contrast down to body. */
+.text-display {
+  font-size: 3rem;
+  line-height: 3.25rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+.text-h1 {
+  font-size: 1.5rem;
+  line-height: 2rem;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+}
+.text-h2 {
+  font-size: 1.125rem;
+  line-height: 1.5rem;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+}
+.text-body {
+  font-size: 0.875rem;
+  line-height: 1.375rem;
+  font-weight: 400;
+}
+.text-caption {
+  font-size: 0.75rem;
+  line-height: 1rem;
+  font-weight: 500;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 999px;
+}
+
+/* Focus states — AI accent ring for AI-related controls, with a soft outer
+   glow (not just a hard ring) so the "AI is listening" moment feels alive. */
+.focus-ai:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--ai-soft), 0 0 0 1px var(--ai), 0 0 28px -6px var(--ai);
+}
+.focus-accent:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--accent-soft), 0 0 0 1px var(--accent);
+}
+
+/* The Home AI input's own glow — applied via focus-within so the whole
+   pill lights up the instant the user starts typing/speaking, not just on
+   a literal focus outline. */
+.ai-glow-focus:focus-within {
+  box-shadow: var(--shadow-hover), 0 0 0 1px var(--ai), 0 0 40px -8px var(--ai);
+}
+
+@keyframes breathe {
+  0%, 100% { opacity: 0.55; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.06); }
+}
+.animate-breathe {
+  animation: breathe 2.4s ease-in-out infinite;
+}
+
+@keyframes soft-rise {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-soft-rise {
+  animation: soft-rise 220ms ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

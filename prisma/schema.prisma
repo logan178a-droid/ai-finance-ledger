@@ -1,0 +1,237 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// NextAuth (next-auth v4 + @auth/prisma-adapter) required models.
+//
+// NextAuth's own adapter model is conventionally named `Account` (OAuth/
+// credentials provider linkage), which collides with our domain concept of a
+// bank/cash/investment account. We resolve this by naming OUR domain model
+// `FinancialAccount` instead, leaving NextAuth's `Account` model with its
+// default name so the Prisma adapter works with zero configuration. See
+// README "Auth model naming" for the rationale.
+// ---------------------------------------------------------------------------
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ---------------------------------------------------------------------------
+// Domain models
+// ---------------------------------------------------------------------------
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String?
+  timezone     String   @default("Asia/Kolkata")
+  // "light" | "dark" | "system" — a real, server-persisted preference (not
+  // just localStorage) so it follows the user across sessions/devices.
+  theme        String   @default("system")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // NextAuth
+  authAccounts Account[]
+  sessions     Session[]
+
+  // Domain
+  financialAccounts FinancialAccount[]
+  creditCards       CreditCard[]
+  categories        Category[]
+  transactions      Transaction[]
+  audits            TransactionAudit[]
+  aiRules           AiRule[]
+}
+
+enum FinancialAccountType {
+  bank
+  cash
+  investment
+}
+
+model FinancialAccount {
+  id             String               @id @default(cuid())
+  userId         String
+  user           User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type           FinancialAccountType
+  name           String
+  institution    String?
+  // Optional — lets bank SMS / share-to-app capture match "a/c XX1234" to
+  // this real account by digit, not by bank-name keyword guessing.
+  lastFourDigits String               @default("")
+  openingBalance Decimal              @default(0) @db.Decimal(14, 2)
+  currency       String               @default("INR")
+  createdAt      DateTime             @default(now())
+
+  transactions Transaction[]
+
+  @@index([userId])
+}
+
+model CreditCard {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name   String
+  // The user only enters a card name — we don't collect real card details.
+  // Everything below has a generic default so the ledger's decomposed
+  // credit-card math (utilization, statement cycle, etc.) still works.
+  issuer             String   @default("")
+  lastFourDigits     String   @default("")
+  creditLimit        Decimal  @default(500000) @db.Decimal(14, 2)
+  statementDay       Int      @default(1) // day of month, 1-28
+  paymentDueDay      Int      @default(15) // day of month, 1-28
+  openingOutstanding Decimal  @default(0) @db.Decimal(14, 2)
+  createdAt          DateTime @default(now())
+
+  transactions Transaction[]
+
+  @@index([userId])
+}
+
+model Category {
+  id               String     @id @default(cuid())
+  userId           String? // null = system default category
+  user             User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name             String
+  parentCategoryId String?
+  parentCategory   Category?  @relation("CategoryParent", fields: [parentCategoryId], references: [id])
+  children         Category[] @relation("CategoryParent")
+
+  transactions Transaction[]
+
+  @@unique([userId, name])
+  @@index([userId])
+}
+
+enum TransactionType {
+  expense
+  income
+  transfer
+  credit_card_payment
+  refund
+}
+
+enum TransactionSource {
+  manual
+  ai_text
+  ai_voice
+  ai_share
+}
+
+model Transaction {
+  id                  String            @id @default(cuid())
+  userId              String
+  user                User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactionType     TransactionType
+  amount              Decimal           @db.Decimal(14, 2)
+  currency            String            @default("INR")
+  transactionDate     DateTime
+  postingDate         DateTime?
+  merchant            String?
+  categoryId          String?
+  category            Category?         @relation(fields: [categoryId], references: [id])
+  subcategory         String?
+  accountId           String?
+  account             FinancialAccount? @relation(fields: [accountId], references: [id])
+  creditCardId        String?
+  creditCard          CreditCard?       @relation(fields: [creditCardId], references: [id])
+  transferId          String? // groups the two legs of a transfer
+  parentTransactionId String?
+  parentTransaction   Transaction?      @relation("SplitTransaction", fields: [parentTransactionId], references: [id])
+  splitChildren       Transaction[]     @relation("SplitTransaction")
+  notes               String?
+  source              TransactionSource @default(manual)
+  aiConfidence        Json?
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+
+  audits TransactionAudit[]
+
+  @@index([userId])
+  @@index([accountId])
+  @@index([creditCardId])
+  @@index([transferId])
+  @@index([userId, transactionDate])
+}
+
+enum AuditAction {
+  created
+  updated
+  deleted
+}
+
+model TransactionAudit {
+  id             String       @id @default(cuid())
+  transactionId  String?
+  transaction    Transaction? @relation(fields: [transactionId], references: [id], onDelete: SetNull)
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  action         AuditAction
+  previousValues Json?
+  newValues      Json?
+  createdAt      DateTime     @default(now())
+
+  @@index([transactionId])
+  @@index([userId])
+}
+
+enum AiRuleField {
+  category
+  account
+  merchant_normalization
+}
+
+model AiRule {
+  id             String      @id @default(cuid())
+  userId         String
+  user           User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  triggerPattern String
+  field          AiRuleField
+  resultValue    String
+  createdAt      DateTime    @default(now())
+
+  @@index([userId])
+}
