@@ -36,7 +36,7 @@ export function AddTransactionForm({ onSaved }: { onSaved?: () => void } = {}) {
 
   const [type, setType] = useState<ManualType>("expense");
   const [amount, setAmount] = useState("");
-  const [merchant, setMerchant] = useState("");
+  const [description, setDescription] = useState("");
   const [date, setDate] = useState(() => format(new Date(), "yyyy-MM-dd"));
   const [paymentId, setPaymentId] = useState("");
   const [toAccountId, setToAccountId] = useState("");
@@ -59,7 +59,7 @@ export function AddTransactionForm({ onSaved }: { onSaved?: () => void } = {}) {
   function reset() {
     setType("expense");
     setAmount("");
-    setMerchant("");
+    setDescription("");
     setDate(format(new Date(), "yyyy-MM-dd"));
     setPaymentId("");
     setToAccountId("");
@@ -113,7 +113,7 @@ export function AddTransactionForm({ onSaved }: { onSaved?: () => void } = {}) {
             transactionType: type,
             amount: amt,
             transactionDate: date,
-            merchant: merchant.trim() || null,
+            description: description.trim() || null,
             categoryName: category || null,
             accountId: isCard ? null : paymentId,
             creditCardId: isCard ? paymentId : null,
@@ -132,7 +132,7 @@ export function AddTransactionForm({ onSaved }: { onSaved?: () => void } = {}) {
         message:
           type === "transfer"
             ? `Transferred ${formatINR(amt)}`
-            : `${type === "income" ? "Added income of" : "Added expense of"} ${formatINR(amt)}${merchant ? ` — ${merchant}` : ""}`,
+            : `${type === "income" ? "Added income of" : "Added expense of"} ${formatINR(amt)}${description ? ` — ${description}` : ""}`,
       });
       reset();
       router.refresh();
@@ -172,7 +172,7 @@ export function AddTransactionForm({ onSaved }: { onSaved?: () => void } = {}) {
       <Input label="Amount" type="number" inputMode="decimal" placeholder="0" value={amount} onChange={(e) => setAmount(e.target.value)} autoFocus />
 
       {type !== "transfer" && (
-        <Input label="Paid to / Merchant" placeholder="e.g. Reliance" value={merchant} onChange={(e) => setMerchant(e.target.value)} />
+        <Input label="Description" placeholder="e.g. Electricity Bill" value={description} onChange={(e) => setDescription(e.target.value)} />
       )}
 
       <Input label="Date" type="date" value={date} onChange={(e) => setDate(e.target.value)} />

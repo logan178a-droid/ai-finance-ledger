@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { getAuthSession } from "@/lib/auth/auth";
 import { getDashboardData } from "@/lib/services/dashboardService";
 import { DashboardStoreScope } from "@/components/dashboard/DashboardStoreScope";
-import { TransactionsTable } from "@/components/transactions/TransactionsTable";
+import { ActivityView } from "@/components/transactions/ActivityView";
 
 export const dynamic = "force-dynamic";
 
@@ -20,7 +20,7 @@ export default async function TransactionsPage() {
           <h1 className="text-xl sm:text-2xl font-semibold tracking-tight">Transactions</h1>
           <p className="text-sm text-muted mt-1">Every transaction in your ledger, computed from your real account history.</p>
         </div>
-        <TransactionsTable />
+        <ActivityView />
       </div>
     </DashboardStoreScope>
   );

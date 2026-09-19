@@ -204,7 +204,7 @@ function AccountCard({
             <li key={t.id} className="flex items-center justify-between text-xs text-muted">
               <span className="flex items-center gap-1.5">
                 <CategoryIcon category={t.category} size={12} />
-                {t.merchant}
+                {t.description}
               </span>
               <span>{format(parseISO(t.transaction_date), "d MMM")}</span>
             </li>

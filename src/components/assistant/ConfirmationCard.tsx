@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Check, Pencil, X, Landmark, CreditCard as CardIcon, AlertTriangle, Sparkles } from "lucide-react";
 import type { Account, CreditCard, ParsedTransaction, Category, TransactionType } from "@/lib/types";
+import { CATEGORY_SUBCATEGORIES } from "@/lib/types";
 import { formatINR, cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -124,9 +125,26 @@ export function ConfirmationCard({
         </div>
 
         <EditableRow
+          label="Description"
+          value={draft.description.value ?? "Unknown"}
+          confidence={draft.description.confidence}
+          editing={editingField === "description"}
+          onEdit={() => setEditingField("description")}
+          onBlur={() => setEditingField(null)}
+        >
+          <input
+            autoFocus
+            value={draft.description.value ?? ""}
+            onChange={(e) => setField("description", e.target.value)}
+            onBlur={() => setEditingField(null)}
+            className="text-sm bg-transparent border-b border-ai outline-none text-right"
+          />
+        </EditableRow>
+
+        <EditableRow
           label="Merchant"
-          value={draft.merchant.value ?? "Unknown"}
-          confidence={draft.merchant.confidence}
+          value={draft.merchant.value || "—"}
+          confidence={draft.merchant.value ? draft.merchant.confidence : undefined}
           editing={editingField === "merchant"}
           onEdit={() => setEditingField("merchant")}
           onBlur={() => setEditingField(null)}
@@ -134,7 +152,8 @@ export function ConfirmationCard({
           <input
             autoFocus
             value={draft.merchant.value ?? ""}
-            onChange={(e) => setField("merchant", e.target.value)}
+            placeholder="Optional"
+            onChange={(e) => setField("merchant", e.target.value || undefined)}
             onBlur={() => setEditingField(null)}
             className="text-sm bg-transparent border-b border-ai outline-none text-right"
           />
@@ -153,6 +172,7 @@ export function ConfirmationCard({
             value={draft.category.value ?? ""}
             onChange={(e) => {
               setField("category", e.target.value as Category);
+              setField("subcategory", undefined);
               setEditingField(null);
             }}
             onBlur={() => setEditingField(null)}
@@ -165,6 +185,35 @@ export function ConfirmationCard({
             ))}
           </select>
         </EditableRow>
+
+        {draft.category.value && (
+          <EditableRow
+            label="Subcategory"
+            value={draft.subcategory.value || "—"}
+            confidence={draft.subcategory.value ? draft.subcategory.confidence : undefined}
+            editing={editingField === "subcategory"}
+            onEdit={() => setEditingField("subcategory")}
+            onBlur={() => setEditingField(null)}
+          >
+            <select
+              autoFocus
+              value={draft.subcategory.value ?? ""}
+              onChange={(e) => {
+                setField("subcategory", e.target.value || undefined);
+                setEditingField(null);
+              }}
+              onBlur={() => setEditingField(null)}
+              className="text-sm bg-transparent border-b border-ai outline-none text-right"
+            >
+              <option value="">—</option>
+              {(CATEGORY_SUBCATEGORIES[draft.category.value] ?? []).map((s) => (
+                <option key={s} value={s}>
+                  {s}
+                </option>
+              ))}
+            </select>
+          </EditableRow>
+        )}
 
         <div className="flex items-center gap-1.5 flex-wrap pt-1">
           <MetaChip>{draft.transaction_date.value}</MetaChip>
@@ -238,12 +287,12 @@ export function ConfirmationCard({
 function describeAsSentence(draft: ParsedTransaction, accounts: Account[], creditCards: CreditCard[]): string {
   const amount = draft.amount.value ? formatINR(draft.amount.value) : "an unknown amount";
   const type = TYPE_LABEL[draft.transaction_type.value ?? "expense"].toLowerCase();
-  const merchant = draft.merchant.value ?? "an unknown merchant";
+  const description = draft.description.value ?? "an unknown transaction";
   const via =
     accounts.find((a) => a.id === draft.account_id.value)?.name ??
     creditCards.find((c) => c.id === draft.credit_card_id.value)?.name ??
     "an unspecified account";
-  return `${amount} ${type} at ${merchant}, on ${draft.transaction_date.value}, via ${via}, category ${draft.category.value ?? "uncategorized"}.`;
+  return `${amount} ${type}, ${description}, on ${draft.transaction_date.value}, via ${via}, category ${draft.category.value ?? "uncategorized"}.`;
 }
 
 function EditableAmount({ value, onChange }: { value: number | undefined; onChange: (v: number | undefined) => void }) {

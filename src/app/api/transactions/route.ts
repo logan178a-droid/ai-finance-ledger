@@ -12,6 +12,7 @@ const CreateSchema = z.object({
   currency: z.string().optional(),
   transactionDate: z.string(),
   postingDate: z.string().nullable().optional(),
+  description: z.string().nullable().optional(),
   merchant: z.string().nullable().optional(),
   categoryId: z.string().nullable().optional(),
   // Convenience for AI-capture callers that only know the category's display

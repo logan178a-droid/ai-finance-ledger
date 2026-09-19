@@ -254,6 +254,16 @@ body::after {
 .hero-ring {
   position: relative;
 }
+
+/* Subtle violet→blue gradient mesh, sitting behind the glass surface on the
+   app's true hero elements only (Net Worth, Total Balance) — never used on
+   ordinary cards, per the "used sparingly" rule. Two soft radial blobs
+   rather than a flat gradient, so it reads as depth/light rather than a
+   solid color fill. */
+.hero-mesh {
+  background-image: radial-gradient(circle at 15% 20%, color-mix(in srgb, var(--ai) 20%, transparent) 0%, transparent 55%),
+    radial-gradient(circle at 85% 85%, color-mix(in srgb, var(--accent) 18%, transparent) 0%, transparent 55%);
+}
 .hero-ring::before {
   content: "";
   position: absolute;

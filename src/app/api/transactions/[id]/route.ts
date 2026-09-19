@@ -12,6 +12,7 @@ const UpdateSchema = z.object({
   currency: z.string().optional(),
   transactionDate: z.string().optional(),
   postingDate: z.string().nullable().optional(),
+  description: z.string().nullable().optional(),
   merchant: z.string().nullable().optional(),
   categoryId: z.string().nullable().optional(),
   // Convenience for the edit form, which only knows the category's display

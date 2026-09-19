@@ -2,6 +2,7 @@ import { zodResponseFormat } from "openai/helpers/zod";
 import { z } from "zod";
 import { formatISO } from "date-fns";
 import type { Category, ParsedTransaction, ParserContext, TransactionType } from "@/lib/types";
+import { CATEGORY_SUBCATEGORIES } from "@/lib/types";
 import { findAccount, findAccountByKeyword, findByBankAndLastFour, findCardByKeyword, KNOWN_CATEGORIES } from "@/lib/ai/parseTransaction";
 import { getOpenAIClient } from "@/lib/ai/openaiClient";
 
@@ -20,36 +21,42 @@ import { getOpenAIClient } from "@/lib/ai/openaiClient";
  * trusted to invent or guess an account/card id.
  */
 
-const OpenAiExtraction = z.object({
+export const DESCRIPTION_FIELD_DESCRIPTION =
+  "The primary, human-friendly label for this transaction — what a person would actually call it, e.g. 'Medicines', 'Electricity Bill', 'Chicken', 'Cash Withdrawal', 'Salary'. NOT necessarily the merchant name — e.g. for 'Paid 1250 at Apollo for medicines', description is 'Medicines', not 'Apollo Pharmacy'. If there's no more specific way to describe it than the merchant itself (e.g. 'Spent 500 at Reliance'), it's fine for description to equal the merchant name. Always in plain English.";
+export const MERCHANT_FIELD_DESCRIPTION =
+  "The specific merchant/payee name if one is mentioned, separate from the description — e.g. 'Apollo Pharmacy', 'Reliance Fresh', 'Rahul Kumar'. Null if none is mentioned.";
+export const SUBCATEGORY_FIELD_DESCRIPTION =
+  "A more specific subcategory within the chosen category, from this list per category: " +
+  Object.entries(CATEGORY_SUBCATEGORIES)
+    .map(([cat, subs]) => `${cat} -> [${subs.join(", ")}]`)
+    .join("; ") +
+  ". Pick the single best match for the chosen category. Null if genuinely unclear.";
+export const LAST_FOUR_FIELD_DESCRIPTION =
+  "If the text mentions a masked account/card number ending in 4 digits — e.g. 'Card x1253', 'a/c XX1234', 'A/c no. XXXXXX5678', 'ending 4321' — extract exactly those 4 digits here (digits only, no letters/X). This is the single most reliable way to identify which real account/card was used (bank SMS almost always include it), so extract it whenever present, separately from payment_hint. Null if no such masked number appears.";
+export const BANK_NAME_FIELD_DESCRIPTION =
+  "The bank or card-issuer name, if identifiable from the text or sender — e.g. 'Kotak', 'HDFC Bank', 'SBI', 'ICICI Bank'. Extract this generally for ANY Indian bank/issuer, not just a fixed set — look for a recognizable institution name near the start of the message or near the account/card reference. Null if genuinely not identifiable.";
+export const ACCOUNT_TYPE_FIELD_DESCRIPTION =
+  "Whether the masked account/card reference is a credit card or a bank account (savings/current), based on wording like 'Credit Card', 'Card x####' (usually credit card) vs 'a/c', 'account', 'debit card' (bank account). Null if unclear.";
+
+export const OpenAiExtraction = z.object({
   transaction_type: z.enum(["expense", "income", "transfer", "credit_card_payment", "refund"]),
   amount: z.number().nullable(),
-  merchant: z.string().nullable(),
+  description: z.string().nullable().describe(DESCRIPTION_FIELD_DESCRIPTION),
+  merchant: z.string().nullable().describe(MERCHANT_FIELD_DESCRIPTION),
   category: z.enum(KNOWN_CATEGORIES as [Category, ...Category[]]).nullable(),
+  subcategory: z.string().nullable().describe(SUBCATEGORY_FIELD_DESCRIPTION),
   transaction_date: z.string().nullable().describe("Resolved to an ISO yyyy-MM-dd date using the provided 'today' reference date and user timezone."),
   payment_hint: z.string().nullable().describe("Free-text mention of the bank account, cash, or credit card used — e.g. 'HDFC card', 'SBI', 'cash'. Null if not mentioned."),
   transfer_to_hint: z.string().nullable().describe("For transfers only: free-text mention of the destination account."),
-  last_four_digits: z
-    .string()
-    .nullable()
-    .describe(
-      "If the text mentions a masked account/card number ending in 4 digits — e.g. 'Card x1253', 'a/c XX1234', 'A/c no. XXXXXX5678', 'ending 4321' — extract exactly those 4 digits here (digits only, no letters/X). This is the single most reliable way to identify which real account/card was used (bank SMS almost always include it), so extract it whenever present, separately from payment_hint. Null if no such masked number appears."
-    ),
-  bank_name: z
-    .string()
-    .nullable()
-    .describe(
-      "The bank or card-issuer name, if identifiable from the text or sender — e.g. 'Kotak', 'HDFC Bank', 'SBI', 'ICICI Bank'. Extract this generally for ANY Indian bank/issuer, not just a fixed set — look for a recognizable institution name near the start of the message or near the account/card reference. Null if genuinely not identifiable."
-    ),
-  account_type: z
-    .enum(["credit_card", "bank_account"])
-    .nullable()
-    .describe(
-      "Whether the masked account/card reference is a credit card or a bank account (savings/current), based on wording like 'Credit Card', 'Card x####' (usually credit card) vs 'a/c', 'account', 'debit card' (bank account). Null if unclear."
-    ),
+  last_four_digits: z.string().nullable().describe(LAST_FOUR_FIELD_DESCRIPTION),
+  bank_name: z.string().nullable().describe(BANK_NAME_FIELD_DESCRIPTION),
+  account_type: z.enum(["credit_card", "bank_account"]).nullable().describe(ACCOUNT_TYPE_FIELD_DESCRIPTION),
   confidence: z.object({
     amount: z.number().min(0).max(1),
+    description: z.number().min(0).max(1),
     merchant: z.number().min(0).max(1),
     category: z.number().min(0).max(1),
+    subcategory: z.number().min(0).max(1),
     payment_hint: z.number().min(0).max(1),
     transaction_date: z.number().min(0).max(1),
   }),
@@ -68,45 +75,33 @@ export interface OpenAiParseResult {
   unresolvedAccountHint?: UnresolvedAccountHint;
 }
 
+export type RawExtraction = z.infer<typeof OpenAiExtraction>;
+
 function inferAccountType(text: string, hint: "credit_card" | "bank_account" | null): "credit_card" | "bank_account" {
   if (hint) return hint;
   return /credit\s*card/i.test(text) ? "credit_card" : "bank_account";
 }
 
-export async function parseWithOpenAI(
-  text: string,
-  ctx: ParserContext,
-  opts: { timezone?: string } = {}
-): Promise<OpenAiParseResult> {
-  const today = formatISO(new Date(), { representation: "date" });
-  const timezone = opts.timezone ?? "Asia/Kolkata";
+/** The extraction prompt/schema, exported so `assistantRouter.ts` can fold this straight into the intent-classification tool call — one OpenAI round trip instead of two (classify, then separately extract). */
+export const EXTRACTION_SYSTEM_PROMPT = (today: string, timezone: string) =>
+  `Today's date is ${today} (user timezone: ${timezone}). Resolve relative dates ("yesterday", "last Sunday", "two days ago") to an exact ISO date using this reference. Bank SMS dates are often in dd-mm-yy or dd-Mon-yy format (e.g. "18-09-26", "18-Sep-26") — parse those correctly as day-month-year, not month-day-year.\n` +
+  `Only choose "transfer" when money moves between the user's OWN two accounts and the text says so explicitly (e.g. "from SBI to HDFC") — a bank SMS only ever describes YOUR side of a transaction, so almost never classify a bank SMS as "transfer"; a UPI payment or fund transfer to someone else is an "expense" (or "income" if money arrived from someone else), not a "transfer". Only choose "credit_card_payment" when the text is about paying off a credit card bill/statement/outstanding (e.g. "payment of INR 5000 received towards your credit card", "bill payment") — never for an ordinary purchase made using a card (that is "expense").\n` +
+  `Never invent an amount, merchant, or account name that isn't stated or strongly implied by the text. If something is not mentioned, return null for it and a low confidence score, rather than guessing.\n` +
+  `BANK SMS SPECIFICS: these are short, templated, and full of noise that must NEVER end up in "description", "merchant", or any other field — ignore available/avl balance or credit limit figures, "Not you?" / fraud-report / block-card instructions, SMS shortcodes (e.g. "SMS BLOCK to 12345"), reference/transaction IDs, and generic boilerplate. For the merchant, use a real recognizable name if one appears (e.g. "at Reliance Store", "to Rahul Kumar", "UPI/Swiggy"); if the only thing present is an opaque UPI reference code (e.g. "UPI-K-662719385075-GAY") with no readable name, leave merchant null with low confidence rather than using the reference code as the merchant name — a human will fill it in on the confirmation card. When merchant is null, description should still be your best short human label for what happened (e.g. "Card Payment", "UPI Payment") rather than also null, unless truly nothing about the transaction's purpose is discernible.\n` +
+  `DESCRIPTION vs MERCHANT: description is the primary label a human would actually use for this transaction ("Medicines", "Electricity Bill", "Chicken", "Cash Withdrawal") — merchant is the specific payee name, kept separate and optional. Do not just copy the merchant into description when a more natural label exists — e.g. "Paid 1250 at Apollo for medicines" -> description "Medicines", merchant "Apollo Pharmacy". If there truly is no more specific description than the merchant/place itself (e.g. "Spent 500 at Reliance" with no stated purpose), description may equal the merchant name.\n` +
+  `CATEGORY + SUBCATEGORY: always try to pick both, subcategory only from that category's own allowed list — never invent one outside it. If genuinely unclear, leave subcategory null.\n` +
+  `For "payment_hint" and "transfer_to_hint", extract the raw wording used to refer to an account or card (e.g. "HDFC card", "SBI", "cash", "Kotak Credit Card") — do NOT invent an account ID or resolve it yourself; that happens server-side. Separately and in addition, if the text mentions a masked account/card number (e.g. "Card x1253", "a/c XX1234", "ending 4321"), extract that into "last_four_digits", the bank/issuer name into "bank_name", and whether it's a credit card or bank account into "account_type" — this last-4 + bank combination is the most reliable identifier in a bank SMS, and works for ANY Indian bank, not just the well-known ones.\n` +
+  `The app currently supports English only. Typed/spoken input may come from speech-to-text, so amounts are sometimes spelled out in words rather than digits — e.g. "five hundred rupees", "three thousand two hundred" — resolve these to the correct numeric amount exactly as if they were written as digits. It may also contain typos, filler words ("um", "like"), or minor mis-transcriptions — be lenient and infer the most likely meaning.\n` +
+  `Always output "description", "merchant", "category", "subcategory", "payment_hint", and "transfer_to_hint" in plain English.`;
 
-  const completion = await getOpenAIClient().chat.completions.parse({
-    model: "gpt-4o-mini",
-    messages: [
-      {
-        role: "system",
-        content:
-          `You extract structured personal-finance transaction data for an Indian personal finance app (currency INR). The input is EITHER a natural-language sentence typed/spoken by the user, OR the raw text of a bank/card SMS or push notification the user shared directly into the app (via Android's Share button) — handle both the same way, inferring which kind of input it is from its shape.\n` +
-          `Today's date is ${today} (user timezone: ${timezone}). Resolve relative dates ("yesterday", "last Sunday", "two days ago") to an exact ISO date using this reference. Bank SMS dates are often in dd-mm-yy or dd-Mon-yy format (e.g. "18-09-26", "18-Sep-26") — parse those correctly as day-month-year, not month-day-year.\n` +
-          `Only choose "transfer" when money moves between the user's OWN two accounts and the text says so explicitly (e.g. "from SBI to HDFC") — a bank SMS only ever describes YOUR side of a transaction, so almost never classify a bank SMS as "transfer"; a UPI payment or fund transfer to someone else is an "expense" (or "income" if money arrived from someone else), not a "transfer". Only choose "credit_card_payment" when the text is about paying off a credit card bill/statement/outstanding (e.g. "payment of INR 5000 received towards your credit card", "bill payment") — never for an ordinary purchase made using a card (that is "expense").\n` +
-          `Never invent an amount, merchant, or account name that isn't stated or strongly implied by the text. If something is not mentioned, return null for it and a low confidence score, rather than guessing.\n` +
-          `BANK SMS SPECIFICS: these are short, templated, and full of noise that must NEVER end up in "merchant" or any other field — ignore available/avl balance or credit limit figures, "Not you?" / fraud-report / block-card instructions, SMS shortcodes (e.g. "SMS BLOCK to 12345"), reference/transaction IDs, and generic boilerplate. For the merchant, use a real recognizable name if one appears (e.g. "at Reliance Store", "to Rahul Kumar", "UPI/Swiggy"); if the only thing present is an opaque UPI reference code (e.g. "UPI-K-662719385075-GAY") with no readable name, leave merchant null with low confidence rather than using the reference code as the merchant name — a human will fill it in on the confirmation card.\n` +
-          `For "payment_hint" and "transfer_to_hint", extract the raw wording used to refer to an account or card (e.g. "HDFC card", "SBI", "cash", "Kotak Credit Card") — do NOT invent an account ID or resolve it yourself; that happens server-side. Separately and in addition, if the text mentions a masked account/card number (e.g. "Card x1253", "a/c XX1234", "ending 4321"), extract that into "last_four_digits", the bank/issuer name into "bank_name", and whether it's a credit card or bank account into "account_type" — this last-4 + bank combination is the most reliable identifier in a bank SMS, and works for ANY Indian bank, not just the well-known ones.\n` +
-          `The app currently supports English only. Typed/spoken input may come from speech-to-text, so amounts are sometimes spelled out in words rather than digits — e.g. "five hundred rupees", "three thousand two hundred" — resolve these to the correct numeric amount exactly as if they were written as digits. It may also contain typos, filler words ("um", "like"), or minor mis-transcriptions — be lenient and infer the most likely meaning.\n` +
-          `Always output "merchant", "category", "payment_hint", and "transfer_to_hint" in plain English — these fields get matched against the user's real account/card names, which are stored in English.`,
-      },
-      { role: "user", content: text },
-    ],
-    response_format: zodResponseFormat(OpenAiExtraction, "transaction_extraction"),
-    temperature: 0,
-  });
-
-  const parsed = completion.choices[0]?.message.parsed;
-  if (!parsed) {
-    throw new Error("OpenAI returned no structured extraction");
-  }
-
+/**
+ * Pure resolution: turns a raw model extraction (however it was obtained —
+ * a standalone extraction call, or folded into the merged classify+extract
+ * tool call in `assistantRouter.ts`) into the final `ParsedTransaction`,
+ * resolving free-text hints against the user's REAL accounts/cards. No
+ * network call happens in here — safe to call as many times as needed.
+ */
+export function resolveExtraction(parsed: RawExtraction, text: string, ctx: ParserContext, today: string): OpenAiParseResult {
   const transaction_type: TransactionType = parsed.transaction_type;
 
   // Resolve free-text hints against the user's REAL rows — the model itself
@@ -180,7 +175,7 @@ export async function parseWithOpenAI(
 
   const missing_fields: string[] = [];
   if (parsed.amount === null) missing_fields.push("amount");
-  if (!parsed.merchant) missing_fields.push("merchant");
+  if (!parsed.description) missing_fields.push("description");
   if (!parsed.category) missing_fields.push("category");
   if (transaction_type === "transfer") {
     if (!accountId || !transferToId) missing_fields.push("account_id");
@@ -198,18 +193,25 @@ export async function parseWithOpenAI(
 
   const confidences = [
     parsed.confidence.amount,
-    parsed.confidence.merchant,
+    parsed.confidence.description,
     parsed.confidence.category,
     resolvedConfidence,
     parsed.confidence.transaction_date,
   ].filter((c) => c > 0);
 
+  const category = (parsed.category as Category) ?? undefined;
+  // Defensive: only trust a model-picked subcategory if it's actually in that
+  // category's allowed list — never let a hallucinated pairing through.
+  const subcategoryValid = category && parsed.subcategory ? CATEGORY_SUBCATEGORIES[category]?.includes(parsed.subcategory) : false;
+
   return {
     parsed: {
       transaction_type: field(transaction_type, 0.9),
       amount: field(parsed.amount ?? undefined, parsed.confidence.amount),
+      description: field(parsed.description ?? parsed.merchant ?? undefined, parsed.confidence.description),
       merchant: field(parsed.merchant ?? undefined, parsed.confidence.merchant),
-      category: field((parsed.category as Category) ?? undefined, parsed.confidence.category),
+      category: field(category, parsed.confidence.category),
+      subcategory: field(subcategoryValid ? parsed.subcategory! : undefined, subcategoryValid ? parsed.confidence.subcategory : 0),
       account_id: field(accountId, resolvedConfidence),
       credit_card_id: field(creditCardId, resolvedConfidence),
       transfer_to_account_id: field(transferToId, resolvedConfidence),
@@ -220,4 +222,38 @@ export async function parseWithOpenAI(
     },
     unresolvedAccountHint,
   };
+}
+
+/**
+ * Standalone extraction call (its own OpenAI round trip) — kept for any
+ * caller that has plain text and no prior classification step. The primary
+ * capture path (`assistantRouter.ts`) no longer uses this; it folds the same
+ * `EXTRACTION_SYSTEM_PROMPT` + schema directly into the classification tool
+ * call instead, saving one full round trip per request.
+ */
+export async function parseWithOpenAI(text: string, ctx: ParserContext, opts: { timezone?: string } = {}): Promise<OpenAiParseResult> {
+  const today = formatISO(new Date(), { representation: "date" });
+  const timezone = opts.timezone ?? "Asia/Kolkata";
+
+  const completion = await getOpenAIClient().chat.completions.parse({
+    model: "gpt-4o-mini",
+    messages: [
+      {
+        role: "system",
+        content:
+          `You extract structured personal-finance transaction data for an Indian personal finance app (currency INR). The input is EITHER a natural-language sentence typed/spoken by the user, OR the raw text of a bank/card SMS or push notification the user shared directly into the app (via Android's Share button) — handle both the same way, inferring which kind of input it is from its shape.\n` +
+          EXTRACTION_SYSTEM_PROMPT(today, timezone),
+      },
+      { role: "user", content: text },
+    ],
+    response_format: zodResponseFormat(OpenAiExtraction, "transaction_extraction"),
+    temperature: 0,
+  });
+
+  const parsed = completion.choices[0]?.message.parsed;
+  if (!parsed) {
+    throw new Error("OpenAI returned no structured extraction");
+  }
+
+  return resolveExtraction(parsed, text, ctx, today);
 }

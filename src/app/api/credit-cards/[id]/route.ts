@@ -20,6 +20,8 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 
 const UpdateSchema = z.object({
   name: z.string().min(1).optional(),
+  issuer: z.string().optional(),
+  network: z.enum(["Visa", "Mastercard", "RuPay", "Amex"]).optional(),
   lastFourDigits: z.string().regex(/^\d{4}$/, "Must be exactly 4 digits").or(z.literal("")).optional(),
 });
 

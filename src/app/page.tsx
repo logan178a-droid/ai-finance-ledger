@@ -5,6 +5,7 @@ import { getAuthSession } from "@/lib/auth/auth";
 import { getDashboardData } from "@/lib/services/dashboardService";
 import { DashboardStoreScope } from "@/components/dashboard/DashboardStoreScope";
 import { AssistantCapture } from "@/components/assistant/AssistantCapture";
+import { ShareToAppStatus } from "@/components/dashboard/ShareToAppStatus";
 
 // DB-backed page: never statically pre-rendered (middleware also guards this
 // route, but force-dynamic additionally ensures no build-time DB call).
@@ -28,6 +29,7 @@ export default async function HomePage() {
     <DashboardStoreScope data={data}>
       <div className="h-[calc(100vh-9rem)] md:h-[calc(100vh-6rem)] flex flex-col max-w-3xl mx-auto w-full">
         <div className="text-center pt-2 pb-6 shrink-0">
+          <ShareToAppStatus />
           <h1 className="text-h1 sm:text-display">What happened with your money?</h1>
           <p className="text-sm sm:text-base text-muted mt-2">Type it, say it, or ask a question — by voice or text.</p>
         </div>

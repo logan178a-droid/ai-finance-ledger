@@ -1,11 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
+import { Modal } from "@/components/ui/Modal";
 import { useToast } from "@/components/ui/Toast";
-import { Landmark, CreditCard as CardIcon, Check, Pencil } from "lucide-react";
+import { Landmark, CreditCard as CardIcon, Check, Pencil, Trash2 } from "lucide-react";
 
 export interface LinkedAccountRow {
   id: string;
@@ -15,14 +17,15 @@ export interface LinkedAccountRow {
 }
 
 /**
- * Share-to-app capture builds this list up automatically: the first time a
- * shared bank SMS mentions an account/card we haven't seen, it's created
- * here on its own. This tab is just for cleanup afterwards — rename an
- * auto-created entry to something recognizable (e.g. "Kotak Credit Card
- * •1253" -> "Kotak Freedom Card"), fix a last-4 digit if it was misread, or
- * delete a wrongly-split duplicate from Accounts / Credit Cards.
+ * The Cards & Accounts management screen — rename, fix a last-4 digit, or
+ * delete any account/card, whether you added it yourself (from Accounts) or
+ * it was auto-created the first time a shared bank SMS mentioned one we
+ * hadn't seen. The last-4 digits are what let AI capture (text, voice, and
+ * Share-to-app) match a bank SMS/notification to the right real
+ * account/card instead of guessing or creating a duplicate.
  */
 export function LinkedCardsTab({ initialRows }: { initialRows: LinkedAccountRow[] }) {
+  const router = useRouter();
   const [rows, setRows] = useState(initialRows);
   const [nameValues, setNameValues] = useState<Record<string, string>>(() => Object.fromEntries(initialRows.map((r) => [r.id, r.name])));
   const [digitValues, setDigitValues] = useState<Record<string, string>>(() =>
@@ -30,7 +33,33 @@ export function LinkedCardsTab({ initialRows }: { initialRows: LinkedAccountRow[
   );
   const [savingId, setSavingId] = useState<string | null>(null);
   const [savedId, setSavedId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<LinkedAccountRow | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const { showToast } = useToast();
+
+  async function confirmDelete() {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    setDeleteError(null);
+    try {
+      const url = deleteTarget.kind === "account" ? `/api/accounts/${deleteTarget.id}` : `/api/credit-cards/${deleteTarget.id}`;
+      const res = await fetch(url, { method: "DELETE" });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        setDeleteError(body.error ?? "Couldn't delete that.");
+        return;
+      }
+      setRows((prev) => prev.filter((r) => r.id !== deleteTarget.id));
+      showToast({ message: `${deleteTarget.name} removed.` });
+      setDeleteTarget(null);
+      router.refresh();
+    } catch {
+      setDeleteError("Couldn't delete that. Please try again.");
+    } finally {
+      setDeleting(false);
+    }
+  }
 
   async function save(row: LinkedAccountRow) {
     const name = (nameValues[row.id] ?? "").trim();
@@ -68,9 +97,8 @@ export function LinkedCardsTab({ initialRows }: { initialRows: LinkedAccountRow[
     <Card className="p-5">
       <h2 className="text-sm font-semibold mb-1">Cards & accounts</h2>
       <p className="text-xs text-muted mb-4">
-        These build up on their own — the first time you share a bank SMS or notification for an account/card we
-        haven&rsquo;t seen, it&rsquo;s added here automatically. Rename any of them, fix a last-4 digit, or delete a
-        wrongly-split duplicate from Accounts / Credit Cards.
+        Rename any account/card, fix its last-4 digits, or delete one — including entries auto-created the first time
+        a shared bank SMS mentioned an account we hadn&rsquo;t seen before.
       </p>
 
       {rows.length === 0 ? (
@@ -106,11 +134,34 @@ export function LinkedCardsTab({ initialRows }: { initialRows: LinkedAccountRow[
                 <Button variant="secondary" size="sm" onClick={() => save(row)} loading={savingId === row.id} disabled={!dirty}>
                   {savedId === row.id ? <Check size={14} /> : "Save"}
                 </Button>
+                <Button variant="secondary" size="sm" onClick={() => setDeleteTarget(row)} className="text-danger hover:text-danger" aria-label={`Delete ${row.name}`}>
+                  <Trash2 size={14} />
+                </Button>
               </li>
             );
           })}
         </ul>
       )}
+
+      <Modal
+        open={!!deleteTarget}
+        onClose={() => {
+          setDeleteTarget(null);
+          setDeleteError(null);
+        }}
+        title={`Delete ${deleteTarget?.name ?? "this"}?`}
+        description="This can't be undone. If it has transactions on it, delete or reassign those first."
+      >
+        {deleteError && <p className="text-xs text-danger mb-3">{deleteError}</p>}
+        <div className="flex gap-2">
+          <Button variant="destructive" onClick={confirmDelete} loading={deleting} className="flex-1">
+            Delete
+          </Button>
+          <Button variant="secondary" onClick={() => setDeleteTarget(null)} disabled={deleting}>
+            Cancel
+          </Button>
+        </div>
+      </Modal>
     </Card>
   );
 }

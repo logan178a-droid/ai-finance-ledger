@@ -23,7 +23,7 @@ export function NetWorthHero() {
   const direction = delta > 0 ? "up" : delta < 0 ? "down" : "flat";
 
   return (
-    <Card className="hero-ring p-6 sm:p-8">
+    <Card className="hero-ring hero-mesh p-6 sm:p-8">
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6">
         <div>
           <span className="text-xs font-medium text-muted uppercase tracking-wide">Net Worth</span>

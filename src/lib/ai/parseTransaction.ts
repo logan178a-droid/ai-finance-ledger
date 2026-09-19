@@ -88,6 +88,7 @@ export const KNOWN_CATEGORIES: Category[] = [
   "Transfer",
   "Credit Card Payment",
   "Healthcare",
+  "Investment",
   "Other",
 ];
 
@@ -370,7 +371,7 @@ class RuleBasedTransactionParser implements TransactionParser {
       if (!account) missing_fields.push("account_id");
     }
     if (!category) missing_fields.push("category");
-    if (!merchant) missing_fields.push("merchant");
+    if (!merchant) missing_fields.push("description");
 
     const confidences: number[] = [];
     const field = <T,>(value: T | undefined, conf: number): { value: T | undefined; confidence: number } => {
@@ -381,8 +382,13 @@ class RuleBasedTransactionParser implements TransactionParser {
     const result: ParsedTransaction = {
       transaction_type: field(transaction_type, 0.85),
       amount: field(amount, amount !== undefined ? 0.95 : 0),
+      // The regex fallback has no separate description-vs-merchant
+      // distinction — it just mirrors the detected merchant text as the
+      // description, same as before this field existed.
+      description: field(merchant, merchant ? 0.8 : 0),
       merchant: field(merchant, merchant ? 0.8 : 0),
       category: field(category, category ? 0.75 : 0),
+      subcategory: field(undefined, 0),
       account_id: field(
         transaction_type === "transfer" ? transferAccounts.from : account && !account.isCard ? account.id : undefined,
         account?.confidence ?? 0.7

@@ -8,6 +8,7 @@ export interface CreateTransactionInput {
   currency?: string;
   transactionDate: string; // ISO date
   postingDate?: string | null;
+  description?: string | null;
   merchant?: string | null;
   categoryId?: string | null;
   subcategory?: string | null;
@@ -68,6 +69,7 @@ export async function createTransaction(userId: string, input: CreateTransaction
         currency: input.currency ?? "INR",
         transactionDate: new Date(input.transactionDate),
         postingDate: input.postingDate ? new Date(input.postingDate) : null,
+        description: input.description ?? input.merchant ?? null,
         merchant: input.merchant ?? null,
         categoryId: input.categoryId ?? null,
         subcategory: input.subcategory ?? null,
@@ -101,6 +103,7 @@ export async function updateTransaction(userId: string, id: string, input: Updat
         ...(input.currency !== undefined && { currency: input.currency }),
         ...(input.transactionDate !== undefined && { transactionDate: new Date(input.transactionDate) }),
         ...(input.postingDate !== undefined && { postingDate: input.postingDate ? new Date(input.postingDate) : null }),
+        ...(input.description !== undefined && { description: input.description }),
         ...(input.merchant !== undefined && { merchant: input.merchant }),
         ...(input.categoryId !== undefined && { categoryId: input.categoryId }),
         ...(input.subcategory !== undefined && { subcategory: input.subcategory }),
@@ -200,6 +203,7 @@ export async function createTransfer(userId: string, input: CreateTransferInput)
         amount: -input.amount,
         currency: input.currency ?? "INR",
         transactionDate: date,
+        description: `Transfer to ${to.name}`,
         merchant: "Self Transfer",
         accountId: input.fromAccountId,
         transferId,
@@ -214,6 +218,7 @@ export async function createTransfer(userId: string, input: CreateTransferInput)
         amount: input.amount,
         currency: input.currency ?? "INR",
         transactionDate: date,
+        description: `Transfer from ${from.name}`,
         merchant: "Self Transfer",
         accountId: input.toAccountId,
         transferId,
@@ -262,6 +267,7 @@ export async function createCreditCardPayment(userId: string, input: CreateCredi
         amount: input.amount,
         currency: input.currency ?? "INR",
         transactionDate: new Date(input.transactionDate),
+        description: `${card.name} Bill Payment`,
         merchant: `${card.name} Bill Payment`,
         accountId: input.fromAccountId,
         creditCardId: input.creditCardId,

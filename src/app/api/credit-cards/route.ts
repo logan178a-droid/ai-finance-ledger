@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { requireUserId } from "@/lib/auth/apiSession";
 import { listCreditCardsWithStatus, createCreditCard } from "@/lib/services/creditCardService";
+import { ServiceError } from "@/lib/services/transactionService";
 
 export const dynamic = "force-dynamic";
 
@@ -19,6 +20,7 @@ export async function GET() {
 const CreateSchema = z.object({
   name: z.string().min(1),
   issuer: z.string().optional(),
+  network: z.enum(["Visa", "Mastercard", "RuPay", "Amex"]).optional(),
   lastFourDigits: z.string().regex(/^\d{4}$/, "Must be exactly 4 digits").optional(),
   creditLimit: z.number().positive().optional(),
   statementDay: z.number().int().min(1).max(28).optional(),
@@ -36,6 +38,12 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Invalid input" }, { status: 400 });
   }
 
-  const creditCard = await createCreditCard(session.userId, parsed.data);
-  return NextResponse.json({ creditCard }, { status: 201 });
+  try {
+    const creditCard = await createCreditCard(session.userId, parsed.data);
+    return NextResponse.json({ creditCard }, { status: 201 });
+  } catch (e) {
+    if (e instanceof ServiceError) return NextResponse.json({ error: e.message }, { status: e.status });
+    console.error("Failed to create credit card:", e);
+    return NextResponse.json({ error: "Couldn't save that card. Please try again." }, { status: 500 });
+  }
 }

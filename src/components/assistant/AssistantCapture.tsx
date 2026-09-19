@@ -86,7 +86,7 @@ export function AssistantCapture({
     const { transaction, undo } = result;
     const verb = transaction.transaction_type === "income" ? "Added income of" : transaction.transaction_type === "expense" ? "Added expense of" : "Logged";
     showToast({
-      message: `${verb} ${formatINR(transaction.amount)} — ${transaction.merchant}`,
+      message: `${verb} ${formatINR(transaction.amount)} — ${transaction.description}`,
       action: { label: "Undo", onClick: undo },
     });
   }

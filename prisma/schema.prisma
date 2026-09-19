@@ -119,6 +119,8 @@ model CreditCard {
   // Everything below has a generic default so the ledger's decomposed
   // credit-card math (utilization, statement cycle, etc.) still works.
   issuer             String   @default("")
+  // "Visa" | "Mastercard" | "RuPay" | "Amex" — optional, purely informational.
+  network            String   @default("Visa")
   lastFourDigits     String   @default("")
   creditLimit        Decimal  @default(500000) @db.Decimal(14, 2)
   statementDay       Int      @default(1) // day of month, 1-28
@@ -170,6 +172,12 @@ model Transaction {
   currency            String            @default("INR")
   transactionDate     DateTime
   postingDate         DateTime?
+  // The primary human-facing label ("Electricity Bill", "Chicken", "Cash
+  // Withdrawal") — not every transaction has a merchant, but every
+  // transaction should have a description. `merchant` stays a separate,
+  // optional, more specific field underneath it (e.g. description
+  // "Medicines", merchant "Apollo Pharmacy").
+  description         String?
   merchant            String?
   categoryId          String?
   category            Category?         @relation(fields: [categoryId], references: [id])

@@ -91,7 +91,9 @@ export function get_account_balance(ctx: QueryContext, query: string): string {
 
 export function search_transactions(ctx: QueryContext, query: string): string {
   const lower = query.toLowerCase();
-  const matches = ctx.transactions.filter((t) => t.merchant.toLowerCase().includes(lower) || t.category.toLowerCase().includes(lower));
+  const matches = ctx.transactions.filter(
+    (t) => t.description.toLowerCase().includes(lower) || (t.merchant ?? "").toLowerCase().includes(lower) || t.category.toLowerCase().includes(lower)
+  );
   if (matches.length === 0) return `I couldn't find any transactions matching "${query}".`;
   const total = matches.reduce((s, t) => s + (t.transaction_type === "expense" ? t.amount : 0), 0);
   return `Found ${matches.length} transaction(s) matching "${query}", totalling ${formatINR(total)}.`;

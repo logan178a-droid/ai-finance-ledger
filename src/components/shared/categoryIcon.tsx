@@ -11,6 +11,7 @@ import {
   CreditCard,
   Stethoscope,
   Wallet,
+  TrendingUp,
   type LucideIcon,
 } from "lucide-react";
 import type { Category } from "@/lib/types";
@@ -28,6 +29,7 @@ const ICONS: Record<Category, LucideIcon> = {
   Transfer: Repeat,
   "Credit Card Payment": CreditCard,
   Healthcare: Stethoscope,
+  Investment: TrendingUp,
   Other: Wallet,
 };
 

@@ -151,12 +151,12 @@ function reducer(state: CaptureState, action: Action): CaptureState {
 }
 
 function isLikelyDuplicate(parsed: ParsedTransaction, existing: Transaction[]): boolean {
-  if (!parsed.amount.value || !parsed.merchant.value) return false;
+  if (!parsed.amount.value || !parsed.description.value) return false;
   const today = parsed.transaction_date.value ?? new Date().toISOString().slice(0, 10);
   return existing.some(
     (t) =>
       t.amount === parsed.amount.value &&
-      t.merchant.toLowerCase() === parsed.merchant.value!.toLowerCase() &&
+      t.description.toLowerCase() === parsed.description.value!.toLowerCase() &&
       t.transaction_date === today
   );
 }
@@ -403,8 +403,10 @@ export function useCaptureFlow(): UseCaptureFlowResult {
               transactionType: type,
               amount: final.amount.value,
               transactionDate,
+              description: final.description.value ?? final.merchant.value ?? null,
               merchant: final.merchant.value ?? null,
               categoryName: final.category.value ?? null,
+              subcategory: final.subcategory.value ?? null,
               accountId: final.account_id.value ?? null,
               creditCardId: final.credit_card_id.value ?? null,
               source,
@@ -421,12 +423,12 @@ export function useCaptureFlow(): UseCaptureFlowResult {
 
         // Optimistic local bump (the nested, real-data StoreProvider on the
         // Dashboard) + a server refresh so every tier reflects real DB state.
-        const localTx = buildTransactionFromParsed(final);
+        const localTx = buildTransactionFromParsed(final, source);
         addTransaction(localTx);
         router.refresh();
 
         const verb = type === "income" ? "Logged income of" : type === "transfer" ? "Logged a transfer of" : "Logged an expense of";
-        dispatch({ type: "SAVED", id: localTx.id, note: `${verb} ${formatINR(localTx.amount)} — ${localTx.merchant}` });
+        dispatch({ type: "SAVED", id: localTx.id, note: `${verb} ${formatINR(localTx.amount)} — ${localTx.description}` });
         const undo = () => {
           removeTransaction(localTx.id);
           fetch(`/api/transactions/${localTx.id}`, { method: "DELETE" }).catch(() => {});

@@ -13,6 +13,7 @@ export async function listCreditCards(userId: string) {
 export interface CreateCreditCardInput {
   name: string;
   issuer?: string;
+  network?: string;
   lastFourDigits?: string;
   creditLimit?: number;
   statementDay?: number;
@@ -26,6 +27,7 @@ export async function createCreditCard(userId: string, input: CreateCreditCardIn
       userId,
       name: input.name,
       ...(input.issuer !== undefined && { issuer: input.issuer }),
+      ...(input.network !== undefined && { network: input.network }),
       ...(input.lastFourDigits !== undefined && { lastFourDigits: input.lastFourDigits }),
       ...(input.creditLimit !== undefined && { creditLimit: input.creditLimit }),
       ...(input.statementDay !== undefined && { statementDay: input.statementDay }),
@@ -41,10 +43,12 @@ export async function getCreditCard(userId: string, cardId: string) {
 
 export interface UpdateCreditCardInput {
   name?: string;
+  issuer?: string;
+  network?: string;
   lastFourDigits?: string;
 }
 
-/** Currently used to let the user add/edit the last-4-digit hint after creation (Settings → Cards & Accounts), for bank-SMS/share-to-app matching. */
+/** Lets the user rename, fix the issuer/network, or add/edit the last-4-digit hint after creation — from the Accounts page or Settings → Cards & Accounts. */
 export async function updateCreditCard(userId: string, cardId: string, input: UpdateCreditCardInput) {
   const existing = await getCreditCard(userId, cardId);
   if (!existing) throw new ServiceError("Credit card not found", 404);
@@ -52,6 +56,8 @@ export async function updateCreditCard(userId: string, cardId: string, input: Up
     where: { id: cardId },
     data: {
       ...(input.name !== undefined && { name: input.name }),
+      ...(input.issuer !== undefined && { issuer: input.issuer }),
+      ...(input.network !== undefined && { network: input.network }),
       ...(input.lastFourDigits !== undefined && { lastFourDigits: input.lastFourDigits }),
     },
   });

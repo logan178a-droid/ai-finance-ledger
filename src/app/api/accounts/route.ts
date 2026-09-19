@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { requireUserId } from "@/lib/auth/apiSession";
 import { listAccountsWithBalances, createAccount } from "@/lib/services/accountService";
+import { ServiceError } from "@/lib/services/transactionService";
 
 export const dynamic = "force-dynamic";
 
@@ -32,6 +33,12 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Invalid input" }, { status: 400 });
   }
 
-  const account = await createAccount(session.userId, parsed.data);
-  return NextResponse.json({ account }, { status: 201 });
+  try {
+    const account = await createAccount(session.userId, parsed.data);
+    return NextResponse.json({ account }, { status: 201 });
+  } catch (e) {
+    if (e instanceof ServiceError) return NextResponse.json({ error: e.message }, { status: e.status });
+    console.error("Failed to create account:", e);
+    return NextResponse.json({ error: "Couldn't save that account. Please try again." }, { status: 500 });
+  }
 }

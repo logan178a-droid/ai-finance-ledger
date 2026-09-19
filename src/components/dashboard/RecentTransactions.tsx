@@ -7,7 +7,7 @@ import { formatINR, cn } from "@/lib/utils";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { CategoryIcon } from "@/components/shared/categoryIcon";
 import { format, parseISO } from "date-fns";
-import type { Transaction } from "@/lib/types";
+import { isAiSource, type Transaction } from "@/lib/types";
 
 export function RecentTransactions() {
   const { transactions } = useStore();
@@ -39,8 +39,8 @@ export function RecentTransactions() {
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1.5">
-                  <span className="text-sm font-medium truncate">{t.merchant}</span>
-                  {t.source === "ai" && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-accent-soft text-accent shrink-0">AI</span>}
+                  <span className="text-sm font-medium truncate">{t.description}</span>
+                  {isAiSource(t.source) && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-accent-soft text-accent shrink-0">AI</span>}
                 </div>
                 <div className="text-xs text-muted">
                   {format(parseISO(t.transaction_date), "d MMM")} · {t.category}

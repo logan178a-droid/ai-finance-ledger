@@ -21,6 +21,7 @@ const SYSTEM_CATEGORIES = [
   "Transfer",
   "Credit Card Payment",
   "Healthcare",
+  "Investment",
   "Other",
 ];
 

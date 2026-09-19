@@ -39,6 +39,59 @@ export function computeAccountBalance(
   return round2(balance);
 }
 
+/**
+ * Per-transaction running balance for a single financial account (bank/cash/
+ * investment) — "balance after" always means the balance of THIS specific
+ * account immediately after that transaction, never a global number. Only
+ * transactions that actually touch this account are included; the rest of
+ * the ledger is irrelevant to its running balance. Returned oldest-first
+ * (ascending date) since a running balance only makes sense accumulated in
+ * chronological order — callers rendering newest-first should reverse.
+ */
+export function computeAccountRunningBalances(
+  account: LedgerAccount,
+  transactions: LedgerTransaction[]
+): { id: string; balanceAfter: number }[] {
+  const own = transactions
+    .filter((t) => t.accountId === account.id)
+    .sort((a, b) => a.transactionDate.localeCompare(b.transactionDate) || (a.createdAt ?? "").localeCompare(b.createdAt ?? ""));
+
+  let balance = account.openingBalance;
+  const rows: { id: string; balanceAfter: number }[] = [];
+  for (const t of own) {
+    if (t.transactionType === "expense") balance -= t.amount;
+    else if (t.transactionType === "income" || t.transactionType === "refund") balance += t.amount;
+    else if (t.transactionType === "transfer") balance += t.amount; // signed per leg, see computeAccountBalance
+    else if (t.transactionType === "credit_card_payment") balance -= t.amount;
+    rows.push({ id: t.id, balanceAfter: round2(balance) });
+  }
+  return rows;
+}
+
+/**
+ * Per-transaction running outstanding for a single credit card — a
+ * liability, so the sign convention is inverted from a bank account: an
+ * expense on the card INCREASES what's owed, a payment or refund DECREASES
+ * it. Returned oldest-first, same convention as computeAccountRunningBalances.
+ */
+export function computeCreditCardRunningOutstanding(
+  card: LedgerCreditCard,
+  transactions: LedgerTransaction[]
+): { id: string; balanceAfter: number }[] {
+  const own = transactions
+    .filter((t) => t.creditCardId === card.id)
+    .sort((a, b) => a.transactionDate.localeCompare(b.transactionDate) || (a.createdAt ?? "").localeCompare(b.createdAt ?? ""));
+
+  let outstanding = card.openingOutstanding;
+  const rows: { id: string; balanceAfter: number }[] = [];
+  for (const t of own) {
+    if (t.transactionType === "expense") outstanding += t.amount;
+    else if (t.transactionType === "refund" || t.transactionType === "credit_card_payment") outstanding -= t.amount;
+    rows.push({ id: t.id, balanceAfter: round2(Math.max(0, outstanding)) });
+  }
+  return rows;
+}
+
 export interface CreditCardStatus {
   cardId: string;
   creditLimit: number;
@@ -127,7 +180,7 @@ export function computeCreditCardStatus(
   };
 }
 
-function mostRecentStatementDate(statementDay: number, asOf: Date): Date {
+export function mostRecentStatementDate(statementDay: number, asOf: Date): Date {
   const y = asOf.getFullYear();
   const m = asOf.getMonth();
   const candidate = new Date(y, m, statementDay);

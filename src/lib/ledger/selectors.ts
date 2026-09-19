@@ -8,6 +8,8 @@ import { parseISO, isSameMonth, subMonths, isAfter, compareAsc } from "date-fns"
 import type { Account, CreditCard, Transaction, Category } from "@/lib/types";
 import {
   computeAccountBalance,
+  computeAccountRunningBalances,
+  computeCreditCardRunningOutstanding,
   computeCreditCardStatus,
   computeNetWorth,
   computeSpendingByCategory,
@@ -192,6 +194,60 @@ export function getUpcomingPayments(snap: LedgerSnapshot, dueSoonDays = 7): Upco
     });
   }
   return results.sort((a, b) => compareAsc(parseISO(a.dueDate), parseISO(b.dueDate)));
+}
+
+export interface LedgerRow {
+  transaction: Transaction;
+  balanceAfter: number;
+}
+
+/** Strips the `-out`/`-in`/`-acc`/`-cc` leg suffix `toLedgerTransactions` adds for transfers/credit-card payments, back to the real UI Transaction id. */
+function baseTransactionId(legId: string): string {
+  return legId.replace(/-(out|in|acc|cc)$/, "");
+}
+
+/**
+ * The real per-account ledger: every transaction that touches this account,
+ * oldest-first internally for the running-balance math, returned newest-first
+ * (the natural reading order for a ledger page) with each row's balance
+ * meaning "this account's balance immediately after this transaction" — never
+ * a global number, per the accounting model.
+ */
+export function getAccountLedgerRows(snap: LedgerSnapshot, accountId: string): LedgerRow[] {
+  const acc = snap.ledgerAccounts.find((a) => a.id === accountId);
+  if (!acc) return [];
+  const runningByLegId = new Map(computeAccountRunningBalances(acc, snap.ledgerTx).map((r) => [r.id, r.balanceAfter]));
+  const byId = new Map(snap.transactions.map((t) => [t.id, t]));
+
+  const rows: LedgerRow[] = [];
+  for (const [legId, balanceAfter] of runningByLegId) {
+    const t = byId.get(baseTransactionId(legId));
+    if (t) rows.push({ transaction: t, balanceAfter });
+  }
+  return rows.sort((a, b) => {
+    const byDate = compareAsc(parseISO(b.transaction.transaction_date), parseISO(a.transaction.transaction_date));
+    if (byDate !== 0) return byDate;
+    return (b.transaction.created_at ?? "").localeCompare(a.transaction.created_at ?? "");
+  });
+}
+
+/** Same as `getAccountLedgerRows` but for a credit card — balance means outstanding owed on the card immediately after that transaction. */
+export function getCreditCardLedgerRows(snap: LedgerSnapshot, cardId: string): LedgerRow[] {
+  const card = snap.ledgerCards.find((c) => c.id === cardId);
+  if (!card) return [];
+  const runningByLegId = new Map(computeCreditCardRunningOutstanding(card, snap.ledgerTx).map((r) => [r.id, r.balanceAfter]));
+  const byId = new Map(snap.transactions.map((t) => [t.id, t]));
+
+  const rows: LedgerRow[] = [];
+  for (const [legId, balanceAfter] of runningByLegId) {
+    const t = byId.get(baseTransactionId(legId));
+    if (t) rows.push({ transaction: t, balanceAfter });
+  }
+  return rows.sort((a, b) => {
+    const byDate = compareAsc(parseISO(b.transaction.transaction_date), parseISO(a.transaction.transaction_date));
+    if (byDate !== 0) return byDate;
+    return (b.transaction.created_at ?? "").localeCompare(a.transaction.created_at ?? "");
+  });
 }
 
 export function getRecentTransactions(transactions: Transaction[], limit = 8): Transaction[] {

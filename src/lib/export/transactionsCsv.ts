@@ -67,15 +67,17 @@ export async function buildTransactionsCsv(userId: string, opts: TransactionsCsv
   const accountBalance = new Map(accounts.map((a) => [a.id, Number(a.openingBalance)]));
   const cardOutstanding = new Map(creditCards.map((c) => [c.id, Number(c.openingOutstanding)]));
 
-  const header = ["Date", "Type", "Amount (INR)", "Merchant", "Category", "Account/Card", "Running Balance (INR)"];
+  const header = ["Date", "Type", "Amount (INR)", "Description", "Merchant", "Category", "Subcategory", "Account/Card", "Running Balance (INR)"];
   const rows: string[][] = [];
 
   for (const t of transactions) {
     const amount = Number(t.amount);
     const date = t.transactionDate.toISOString().slice(0, 10);
     const type = TYPE_LABEL[t.transactionType] ?? t.transactionType;
+    const description = t.description ?? t.merchant ?? "";
     const merchant = t.merchant ?? "";
     const category = t.category?.name ?? "";
+    const subcategory = t.subcategory ?? "";
 
     let signedAmount = amount;
     let runningBalance: number | null = null;
@@ -125,8 +127,10 @@ export async function buildTransactionsCsv(userId: string, opts: TransactionsCsv
       date,
       type,
       formatAmount(signedAmount),
+      description,
       merchant,
       category,
+      subcategory,
       entityLabel,
       runningBalance !== null ? formatAmount(runningBalance) : "",
     ]);
