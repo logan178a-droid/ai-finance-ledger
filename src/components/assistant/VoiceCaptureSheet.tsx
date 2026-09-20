@@ -123,6 +123,13 @@ export function VoiceCaptureSheet({ open, onClose }: { open: boolean; onClose: (
           </div>
         )}
 
+        {flow.stage === "saving" && (
+          <div className="flex flex-col items-center gap-3 py-10">
+            <span className="h-3 w-3 rounded-full bg-accent animate-breathe" aria-hidden />
+            <p className="text-sm text-muted">Saving…</p>
+          </div>
+        )}
+
         {flow.stage === "error" && (
           <div className="py-6 text-center">
             <p className="text-sm text-negative mb-3">{flow.errorMessage}</p>

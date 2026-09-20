@@ -93,10 +93,12 @@ export function HomeView({ name, daysLeftLabel }: { name: string; daysLeftLabel:
                 fontSize: 38,
                 fontWeight: 800,
                 letterSpacing: "-0.02em",
-                background: "linear-gradient(135deg,#F4F7FF,#C9D4F5)",
-                WebkitBackgroundClip: "text",
-                backgroundClip: "text",
-                color: "transparent",
+                // A solid, guaranteed-visible color, not a
+                // background-clip:text gradient — that trick renders fully
+                // invisible text (transparent with no fallback) on any
+                // browser/WebView that doesn't support clipping a
+                // background to text, which is exactly what was reported.
+                color: "#F4F7FF",
               }}
             >
               {new Intl.NumberFormat("en-IN").format(Math.round(total))}

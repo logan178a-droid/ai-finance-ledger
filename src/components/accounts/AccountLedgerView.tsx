@@ -66,14 +66,7 @@ export function AccountLedgerView({ accountId }: { accountId: string }) {
         <MonoLabel>Current Balance</MonoLabel>
         <div
           className="money font-extrabold mt-1 mb-5"
-          style={{
-            fontSize: 34,
-            letterSpacing: "-0.02em",
-            background: "linear-gradient(135deg,#F4F7FF,#C9D4F5)",
-            WebkitBackgroundClip: "text",
-            backgroundClip: "text",
-            color: "transparent",
-          }}
+          style={{ fontSize: 34, letterSpacing: "-0.02em", color: "#F4F7FF" }}
         >
           {formatINR(balance)}
         </div>
