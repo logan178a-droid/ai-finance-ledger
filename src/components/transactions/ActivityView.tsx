@@ -45,6 +45,7 @@ export function ActivityView() {
   // user switch to the minimal Simple view if they don't want it).
   const [detailed, setDetailed] = useState(true);
   const [collapsedMonths, setCollapsedMonths] = useState<Set<string>>(new Set());
+  const [quickFilter, setQuickFilter] = useState<"all" | "expense" | "income" | "cards">("all");
 
   const categoryOptions = useMemo(() => Array.from(new Set(transactions.map((t) => t.category))).sort(), [transactions]);
   const accountOptions = useMemo(
@@ -65,6 +66,9 @@ export function ActivityView() {
 
   const filtered = useMemo(() => {
     return transactions.filter((t) => {
+      if (quickFilter === "expense" && t.transaction_type !== "expense") return false;
+      if (quickFilter === "income" && t.transaction_type !== "income" && t.transaction_type !== "refund") return false;
+      if (quickFilter === "cards" && !t.credit_card_id) return false;
       if (typeFilter !== "all" && t.transaction_type !== typeFilter) return false;
       if (categoryFilter !== "all" && t.category !== categoryFilter) return false;
       if (accountFilter !== "all" && t.account_id !== accountFilter && t.credit_card_id !== accountFilter && t.transfer_to_account_id !== accountFilter) {
@@ -76,7 +80,7 @@ export function ActivityView() {
       const q = query.toLowerCase();
       return t.description.toLowerCase().includes(q) || (t.merchant ?? "").toLowerCase().includes(q) || t.category.toLowerCase().includes(q);
     });
-  }, [transactions, query, typeFilter, categoryFilter, accountFilter, fromDate, toDate]);
+  }, [transactions, query, quickFilter, typeFilter, categoryFilter, accountFilter, fromDate, toDate]);
 
   const months = useMemo(() => groupByMonthAndDay(filtered), [filtered]);
 
@@ -147,6 +151,33 @@ export function ActivityView() {
             {detailed ? "Detailed" : "Simple"}
           </button>
         </div>
+      </div>
+
+      <div className="flex gap-2 overflow-x-auto pb-0.5">
+        {(
+          [
+            ["all", "All"],
+            ["expense", "Expenses"],
+            ["income", "Income"],
+            ["cards", "Credit Cards"],
+          ] as const
+        ).map(([value, label]) => {
+          const active = quickFilter === value;
+          return (
+            <button
+              key={value}
+              onClick={() => setQuickFilter(value)}
+              className="shrink-0 text-xs font-semibold px-3.5 py-2 rounded-full transition-colors"
+              style={
+                active
+                  ? { background: "linear-gradient(135deg, var(--accent), var(--accent-hover))", color: "#fff" }
+                  : { background: "var(--surface)", border: "1px solid var(--border)", color: "var(--muted)" }
+              }
+            >
+              {label}
+            </button>
+          );
+        })}
       </div>
 
       {months.length === 0 ? (

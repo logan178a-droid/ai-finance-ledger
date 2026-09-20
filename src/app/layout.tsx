@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Manrope, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import { AppShell } from "@/components/layout/AppShell";
 import { ToastProvider } from "@/components/ui/Toast";
@@ -7,13 +7,15 @@ import { SessionProvider } from "@/components/providers/SessionProvider";
 import { getAuthSession } from "@/lib/auth/auth";
 import { prisma } from "@/lib/prisma";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const manrope = Manrope({
+  variable: "--font-manrope",
+  weight: ["500", "600", "700", "800"],
   subsets: ["latin"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const plexMono = IBM_Plex_Mono({
+  variable: "--font-plex-mono",
+  weight: ["400", "500", "600"],
   subsets: ["latin"],
 });
 
@@ -52,7 +54,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       // "system" intentionally sets no attribute — globals.css then falls
       // through to the prefers-color-scheme media query.
       {...(theme !== "system" && { "data-theme": theme })}
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${manrope.variable} ${plexMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-background text-foreground">
         <SessionProvider>

@@ -5,6 +5,7 @@
   --background: #f4f6fb;
   --surface: rgba(255, 255, 255, 0.66);
   --surface-raised: rgba(255, 255, 255, 0.82);
+  --surface-nav: rgba(255, 255, 255, 0.9);
   --foreground: #0f172a;
   --muted: #5b6478;
   --muted-soft: #8891a3;
@@ -25,6 +26,7 @@
 
   /* Semantic (muted, AA-safe, never the sole signal) */
   --positive: #059669;
+  --positive-icon: #059669;
   --positive-soft: rgba(5, 150, 105, 0.1);
   --negative: #dc2626;
   --negative-soft: rgba(220, 38, 38, 0.1);
@@ -54,95 +56,100 @@
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    /* ===== DARK THEME — deep navy + glassmorphism ===== */
+    /* ===== DARK THEME — locked premium spec (Ink Navy + glass) ===== */
     --background: #0a1128;
-    --surface: rgba(24, 38, 76, 0.5);
-    --surface-raised: rgba(32, 48, 92, 0.62);
-    --foreground: #f3f5fa;
-    --muted: #8b96b8;
-    --muted-soft: #626e8f;
-    --border: rgba(255, 255, 255, 0.1);
-    --border-strong: rgba(255, 255, 255, 0.18);
+    --surface: rgba(255, 255, 255, 0.04);
+    --surface-raised: rgba(255, 255, 255, 0.06);
+    --surface-nav: rgba(16, 24, 55, 0.85);
+    --foreground: #edf1fb;
+    --muted: #7c89b8;
+    --muted-soft: #5a6690;
+    --border: rgba(255, 255, 255, 0.08);
+    --border-strong: rgba(255, 255, 255, 0.16);
 
-    --accent: #4d84ff;
-    --accent-hover: #6b98ff;
-    --accent-soft: rgba(77, 132, 255, 0.16);
-    --accent-foreground: #06102a;
+    --accent: #4c86ff;
+    --accent-hover: #6c9bff;
+    --accent-soft: rgba(76, 134, 255, 0.14);
+    --accent-foreground: #ffffff;
 
-    --ai: #a78bfa;
-    --ai-hover: #bda6fb;
-    --ai-soft: rgba(167, 139, 250, 0.16);
-    --ai-foreground: #150f2e;
+    --ai: #9c8cff;
+    --ai-hover: #b49bff;
+    --ai-soft: rgba(156, 140, 255, 0.14);
+    --ai-foreground: #ffffff;
 
-    --positive: #34d399;
-    --positive-soft: rgba(52, 211, 153, 0.14);
-    --negative: #fb7185;
-    --negative-soft: rgba(251, 113, 133, 0.14);
-    --warning: #fbbf24;
-    --warning-soft: rgba(251, 191, 36, 0.14);
+    --positive: #34d6a6;
+    --positive-icon: #5fe7c3;
+    --positive-soft: rgba(52, 214, 166, 0.12);
+    --negative: #ff8fa0;
+    --negative-soft: rgba(255, 143, 160, 0.12);
+    --warning: #f0a83c;
+    --warning-soft: rgba(240, 168, 60, 0.14);
 
-    --danger: #fb7185;
-    --danger-soft: rgba(251, 113, 133, 0.14);
+    --danger: #ff8fa0;
+    --danger-soft: rgba(255, 143, 160, 0.12);
 
     --glass-blur: 18px;
     --glass-blur-strong: 36px;
-    --glass-border-top: rgba(255, 255, 255, 0.1);
+    --glass-border-top: rgba(255, 255, 255, 0.09);
     --shadow-rest: 0 1px 2px rgba(0, 0, 0, 0.3), inset 0 1px 0 var(--glass-border-top);
     --shadow-hover: 0 16px 40px -6px rgba(0, 0, 0, 0.5), inset 0 1px 0 var(--glass-border-top);
-    --shadow-strong: 0 24px 70px -10px rgba(0, 0, 0, 0.55), inset 0 1px 0 var(--glass-border-top);
+    --shadow-strong: 0 30px 60px rgba(4, 8, 24, 0.45), inset 0 1px 0 var(--glass-border-top);
 
-    --glow-accent: rgba(77, 132, 255, 0.24);
-    --glow-ai: rgba(167, 139, 250, 0.16);
-    --glow-accent-2: rgba(77, 132, 255, 0.14);
+    --glow-accent: rgba(76, 134, 255, 0.24);
+    --glow-ai: rgba(156, 140, 255, 0.16);
+    --glow-accent-2: rgba(76, 134, 255, 0.14);
   }
 }
 
 :root[data-theme="dark"] {
   --background: #0a1128;
-  --surface: rgba(24, 38, 76, 0.5);
-  --surface-raised: rgba(32, 48, 92, 0.62);
-  --foreground: #f3f5fa;
-  --muted: #8b96b8;
-  --muted-soft: #626e8f;
-  --border: rgba(255, 255, 255, 0.1);
-  --border-strong: rgba(255, 255, 255, 0.18);
+  --surface: rgba(255, 255, 255, 0.04);
+  --surface-raised: rgba(255, 255, 255, 0.06);
+  --surface-nav: rgba(16, 24, 55, 0.85);
+  --foreground: #edf1fb;
+  --muted: #7c89b8;
+  --muted-soft: #5a6690;
+  --border: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.16);
 
-  --accent: #4d84ff;
-  --accent-hover: #6b98ff;
-  --accent-soft: rgba(77, 132, 255, 0.16);
-  --accent-foreground: #06102a;
+  --accent: #4c86ff;
+  --accent-hover: #6c9bff;
+  --accent-soft: rgba(76, 134, 255, 0.14);
+  --accent-foreground: #ffffff;
 
-  --ai: #a78bfa;
-  --ai-hover: #bda6fb;
-  --ai-soft: rgba(167, 139, 250, 0.16);
-  --ai-foreground: #150f2e;
+  --ai: #9c8cff;
+  --ai-hover: #b49bff;
+  --ai-soft: rgba(156, 140, 255, 0.14);
+  --ai-foreground: #ffffff;
 
-  --positive: #34d399;
-  --positive-soft: rgba(52, 211, 153, 0.14);
-  --negative: #fb7185;
-  --negative-soft: rgba(251, 113, 133, 0.14);
-  --warning: #fbbf24;
-  --warning-soft: rgba(251, 191, 36, 0.14);
+  --positive: #34d6a6;
+  --positive-icon: #5fe7c3;
+  --positive-soft: rgba(52, 214, 166, 0.12);
+  --negative: #ff8fa0;
+  --negative-soft: rgba(255, 143, 160, 0.12);
+  --warning: #f0a83c;
+  --warning-soft: rgba(240, 168, 60, 0.14);
 
-  --danger: #fb7185;
-  --danger-soft: rgba(251, 113, 133, 0.14);
+  --danger: #ff8fa0;
+  --danger-soft: rgba(255, 143, 160, 0.12);
 
   --glass-blur: 18px;
   --glass-blur-strong: 36px;
-  --glass-border-top: rgba(255, 255, 255, 0.1);
+  --glass-border-top: rgba(255, 255, 255, 0.09);
   --shadow-rest: 0 1px 2px rgba(0, 0, 0, 0.3), inset 0 1px 0 var(--glass-border-top);
   --shadow-hover: 0 16px 40px -6px rgba(0, 0, 0, 0.5), inset 0 1px 0 var(--glass-border-top);
-  --shadow-strong: 0 24px 70px -10px rgba(0, 0, 0, 0.55), inset 0 1px 0 var(--glass-border-top);
+  --shadow-strong: 0 30px 60px rgba(4, 8, 24, 0.45), inset 0 1px 0 var(--glass-border-top);
 
-  --glow-accent: rgba(77, 132, 255, 0.24);
-  --glow-ai: rgba(167, 139, 250, 0.16);
-  --glow-accent-2: rgba(77, 132, 255, 0.14);
+  --glow-accent: rgba(76, 134, 255, 0.24);
+  --glow-ai: rgba(156, 140, 255, 0.16);
+  --glow-accent-2: rgba(76, 134, 255, 0.14);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-surface: var(--surface);
   --color-surface-raised: var(--surface-raised);
+  --color-surface-nav: var(--surface-nav);
   --color-foreground: var(--foreground);
   --color-muted: var(--muted);
   --color-muted-soft: var(--muted-soft);
@@ -160,6 +167,7 @@
   --color-ai-foreground: var(--ai-foreground);
 
   --color-positive: var(--positive);
+  --color-positive-icon: var(--positive-icon);
   --color-positive-soft: var(--positive-soft);
   --color-negative: var(--negative);
   --color-negative-soft: var(--negative-soft);
@@ -169,8 +177,8 @@
   --color-danger: var(--danger);
   --color-danger-soft: var(--danger-soft);
 
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-manrope);
+  --font-mono: var(--font-plex-mono);
 }
 
 body {
@@ -315,6 +323,20 @@ body::after {
 .money {
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum" 1;
+}
+
+/* Mono uppercase micro-labels (category/account/status metadata) and plain
+   mono data (timestamps, chip figures) — the locked premium spec's two
+   recurring text treatments, used everywhere via GlassPrimitives. */
+.afl-label {
+  font-family: var(--font-mono), monospace;
+  font-size: 10.5px;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.afl-mono {
+  font-family: var(--font-mono), monospace;
 }
 
 /* Typography scale — confident, tight-tracked hero numbers (Net Worth,

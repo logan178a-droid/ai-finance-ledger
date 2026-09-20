@@ -2,15 +2,13 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Radio, Download } from "lucide-react";
+import { ChevronRight, Smartphone } from "lucide-react";
 
 /**
- * Share-to-app is now the app's primary, most "automatic-feeling" capture
- * method — this reflects its REAL state, not a fake badge: `display-mode:
- * standalone` only matches when the app is actually installed (Add to Home
- * Screen / TWA), which is exactly the condition `share_target` in the web
- * manifest needs to register with the OS share sheet (see `manifest.ts`).
- * So "active" here means it genuinely is.
+ * Full-width status pill — reflects REAL PWA install state via
+ * `display-mode: standalone` (which is exactly the condition `share_target`
+ * in the web manifest needs to register with the OS share sheet), never a
+ * fake "always active" badge.
  */
 export function ShareToAppStatus() {
   const [installed, setInstalled] = useState<boolean | null>(null);
@@ -23,17 +21,29 @@ export function ShareToAppStatus() {
     return () => mq.removeEventListener("change", update);
   }, []);
 
-  // Avoid a flash of the wrong state before the check runs client-side.
-  if (installed === null) return null;
+  if (installed === null) return <div style={{ height: 46 }} />;
 
   if (installed) {
     return (
-      <div className="flex items-center justify-center gap-2 text-xs text-positive mb-4">
-        <span className="relative flex h-2 w-2">
-          <span className="absolute inline-flex h-full w-full rounded-full bg-positive opacity-60 animate-ping" />
-          <span className="relative inline-flex h-2 w-2 rounded-full bg-positive" />
+      <div
+        className="flex items-center gap-2.5"
+        style={{
+          padding: "11px 14px",
+          borderRadius: 14,
+          background: "rgba(52,214,166,0.08)",
+          border: "1px solid rgba(52,214,166,0.22)",
+        }}
+      >
+        <span
+          className="relative shrink-0"
+          style={{ width: 7, height: 7, borderRadius: "50%", background: "#34D6A6", boxShadow: "0 0 0 4px rgba(52,214,166,0.18)" }}
+        >
+          <span className="absolute inset-0 rounded-full animate-ping" style={{ background: "#34D6A6", opacity: 0.6 }} />
         </span>
-        Share-to-app active — bank SMS you share land here automatically
+        <div className="flex-1 min-w-0" style={{ fontSize: 12.5, fontWeight: 600, color: "#B9F2E0" }}>
+          Capturing automatically · Share-to-app active
+        </div>
+        <ChevronRight size={14} color="#7FE3C4" strokeWidth={2.4} className="shrink-0" />
       </div>
     );
   }
@@ -41,13 +51,19 @@ export function ShareToAppStatus() {
   return (
     <Link
       href="/settings?tab=share-setup"
-      className="flex items-center justify-center gap-2 text-xs text-muted hover:text-accent transition-colors mb-4 group"
+      className="flex items-center gap-2.5"
+      style={{
+        padding: "11px 14px",
+        borderRadius: 14,
+        background: "var(--surface)",
+        border: "1px solid var(--border)",
+      }}
     >
-      <Radio size={13} className="shrink-0" />
-      Set up Share-to-app once — most transactions log themselves after
-      <span className="text-accent font-medium inline-flex items-center gap-1">
-        <Download size={12} /> Install
-      </span>
+      <Smartphone size={14} color="var(--muted)" strokeWidth={2.2} className="shrink-0" />
+      <div className="flex-1 min-w-0" style={{ fontSize: 12.5, fontWeight: 600, color: "var(--muted)" }}>
+        Set up Share-to-app — most transactions log themselves after
+      </div>
+      <ChevronRight size={14} color="var(--muted)" strokeWidth={2.4} className="shrink-0" />
     </Link>
   );
 }

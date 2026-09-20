@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { Home, LayoutDashboard, ArrowLeftRight, Landmark, CreditCard, Settings as SettingsIcon, Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LogoMark } from "@/components/branding/LogoMark";
+import { BottomNav } from "@/components/layout/BottomNav";
 
 // Home (the AI capture surface) is the default landing page; the full
 // overview lives one click away at /dashboard, no longer the first thing
@@ -39,29 +40,36 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <SidebarContent pathname={pathname} />
       </aside>
 
-      {/* Mobile top bar */}
-      <div className="glass-strong md:hidden fixed top-0 left-0 right-0 z-30 flex items-center justify-between px-4 py-3 bg-surface-raised border-b border-border">
-        <div className="flex items-center gap-2 font-semibold">
-          <LogoMark size={22} className="rounded-md" />
-          AI Finance Ledger
+      {/* Mobile top bar — Home renders its own header (avatar/greeting/bell
+          per spec), so this only shows on other routes. */}
+      {pathname !== "/" && (
+        <div className="glass-strong md:hidden fixed top-0 left-0 right-0 z-30 flex items-center justify-between px-4 py-3 bg-surface-raised border-b border-border">
+          <div className="flex items-center gap-2 font-semibold">
+            <LogoMark size={22} className="rounded-md" />
+            AI Finance Ledger
+          </div>
+          <button
+            aria-label="Toggle menu"
+            className="p-2 rounded-md hover:bg-background"
+            onClick={() => setMobileOpen((v) => !v)}
+          >
+            {mobileOpen ? <X size={20} /> : <Menu size={20} />}
+          </button>
         </div>
-        <button
-          aria-label="Toggle menu"
-          className="p-2 rounded-md hover:bg-background"
-          onClick={() => setMobileOpen((v) => !v)}
-        >
-          {mobileOpen ? <X size={20} /> : <Menu size={20} />}
-        </button>
-      </div>
+      )}
       {mobileOpen && (
         <div className="glass-strong md:hidden fixed top-[57px] left-0 right-0 z-20 bg-surface-raised border-b border-border px-4 py-4 max-h-[calc(100vh-57px)] overflow-y-auto">
           <SidebarContent pathname={pathname} onNavigate={() => setMobileOpen(false)} />
         </div>
       )}
 
-      <main className="flex-1 min-w-0 pt-[57px] md:pt-0">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 md:py-8">{children}</div>
+      <main className={cn("flex-1 min-w-0 md:pt-0", pathname !== "/" && "pt-[57px]")}>
+        <div className={cn("max-w-7xl mx-auto", pathname === "/" ? "h-screen md:px-6 md:py-8" : "px-4 sm:px-6 py-6 md:py-8 pb-28 md:pb-8")}>
+          {children}
+        </div>
       </main>
+
+      <BottomNav />
     </div>
   );
 }

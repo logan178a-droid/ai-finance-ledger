@@ -5,7 +5,11 @@ import Link from "next/link";
 import { useStore } from "@/lib/store/StoreContext";
 import { getCreditCardStatus } from "@/lib/ledger/uiAdapters";
 import { formatINR, cn } from "@/lib/utils";
-import { Card } from "@/components/ui/Card";
+import { GlassCard } from "@/components/ui/afl/GlassCard";
+import { MonoLabel } from "@/components/ui/afl/MonoLabel";
+import { CategoryIcon } from "@/components/shared/categoryIcon";
+import { CATEGORY_COLOR } from "@/lib/categoryColor";
+import { isAiSource } from "@/lib/types";
 import { format, parseISO } from "date-fns";
 import { ChevronLeft, CreditCard as CardIcon } from "lucide-react";
 
@@ -34,74 +38,111 @@ export function CreditCardDetail({ cardId }: { cardId: string }) {
       </Link>
 
       <div className="flex items-center gap-3">
-        <div className="h-11 w-11 rounded-xl bg-accent-soft text-accent flex items-center justify-center">
-          <CardIcon size={20} />
-        </div>
+        <span
+          className="flex shrink-0 items-center justify-center"
+          style={{ width: 44, height: 44, borderRadius: 15, background: "rgba(255,143,160,0.12)" }}
+        >
+          <CardIcon size={20} color="var(--negative)" strokeWidth={2} />
+        </span>
         <div>
           <h1 className="text-xl font-semibold tracking-tight">{card.name}</h1>
-          {card.bank && <p className="text-sm text-muted">{card.bank}</p>}
+          {card.bank && <MonoLabel>{card.bank}</MonoLabel>}
         </div>
       </div>
+
+      {/* hero: the four fields the spec calls out explicitly */}
+      <GlassCard radius={26} padding="22px" tone="hero">
+        <div className="grid grid-cols-2 gap-y-5">
+          <div>
+            <MonoLabel>Current Outstanding</MonoLabel>
+            <div className="money text-3xl font-extrabold mt-1" style={{ color: "var(--negative)", letterSpacing: "-0.01em" }}>
+              {formatINR(status.currentOutstanding)}
+            </div>
+          </div>
+          <div>
+            <MonoLabel>Statement Amount</MonoLabel>
+            <div className="money text-2xl font-bold mt-1">{formatINR(status.amountDue)}</div>
+          </div>
+          <div>
+            <MonoLabel>Unbilled</MonoLabel>
+            <div className="money text-lg font-semibold mt-1">{formatINR(status.unbilledSpending)}</div>
+          </div>
+          <div>
+            <MonoLabel>Due Date</MonoLabel>
+            <div className="text-lg font-semibold mt-1">{format(parseISO(status.dueDate), "d MMM yyyy")}</div>
+          </div>
+        </div>
+      </GlassCard>
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
         <Stat label="Credit Limit" value={formatINR(card.creditLimit)} />
         <Stat label="Available Credit" value={formatINR(status.availableCredit)} />
-        <Stat label="Current Outstanding" value={formatINR(status.currentOutstanding)} tone="danger" />
-        <Stat label="Current Statement Balance" value={formatINR(status.statementBalance)} />
-        <Stat label="Amount Due" value={formatINR(status.amountDue)} tone="danger" />
         <Stat label="Minimum Due" value={formatINR(status.minimumDue)} />
-        <Stat label="Unbilled (current cycle) Spending" value={formatINR(status.unbilledSpending)} />
         <Stat label="Previous Statement Remaining" value={formatINR(status.previousStatementRemaining)} />
         <Stat label="Projected Next Statement" value={formatINR(status.projectedNextStatement)} />
-        <Stat label="Due Date" value={format(parseISO(status.dueDate), "d MMM yyyy")} />
       </div>
 
-      <Card className="p-5">
+      <GlassCard radius={20} padding="18px 20px">
         <h3 className="text-sm font-semibold mb-3">Credit Utilization</h3>
         <div className="h-2.5 rounded-full bg-background overflow-hidden">
           <div
-            className={cn("h-full rounded-full", utilization > 70 ? "bg-danger" : "bg-accent")}
-            style={{ width: `${utilization}%` }}
+            className="h-full rounded-full"
+            style={{ width: `${utilization}%`, background: utilization > 70 ? "var(--negative)" : "var(--accent)" }}
           />
         </div>
-        <p className="text-xs text-muted mt-2">{utilization}% of {formatINR(card.creditLimit)} limit used</p>
-      </Card>
+        <MonoLabel className="mt-2">
+          {utilization}% of {formatINR(card.creditLimit)} limit used
+        </MonoLabel>
+      </GlassCard>
 
-      <Card className="p-5">
+      <GlassCard radius={20} padding="18px 20px">
         <h3 className="text-sm font-semibold mb-4">Billing Cycle Timeline</h3>
         <BillingTimeline card={card} dueDate={status.dueDate} />
-      </Card>
+      </GlassCard>
 
-      <Card>
-        <div className="px-5 pt-5 pb-2">
-          <h3 className="text-sm font-semibold">Card Activity</h3>
-        </div>
-        <ul className="px-3 pb-4">
-          {cardTx.slice(0, 10).map((t) => (
-            <li key={t.id} className="flex items-center justify-between px-2 py-2.5 rounded-xl hover:bg-background text-sm">
-              <div>
-                <div className="font-medium">{t.description}</div>
-                <div className="text-xs text-muted">{format(parseISO(t.transaction_date), "d MMM yyyy")} · {t.category}</div>
-              </div>
-              <div className={cn("font-semibold", t.transaction_type === "credit_card_payment" ? "text-accent" : "text-foreground")}>
-                {t.transaction_type === "credit_card_payment" ? "-" : ""}
-                {formatINR(t.amount)}
-              </div>
-            </li>
-          ))}
+      <GlassCard radius={20} padding="20px 12px 12px">
+        <h3 className="text-sm font-semibold px-3 mb-2">Card Activity</h3>
+        <ul>
+          {cardTx.slice(0, 10).map((t) => {
+            const iconColor = CATEGORY_COLOR[t.category] ?? "#7C89B8";
+            const isPayment = t.transaction_type === "credit_card_payment";
+            return (
+              <li key={t.id} className="flex items-center gap-3 px-2 py-2.5 rounded-xl hover:bg-background text-sm">
+                <span
+                  className="flex shrink-0 items-center justify-center"
+                  style={{ width: 34, height: 34, borderRadius: 11, background: `color-mix(in srgb, ${iconColor} 12%, transparent)` }}
+                >
+                  <CategoryIcon category={t.category} size={15} color={iconColor} />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-medium truncate">{t.description}</span>
+                    {isAiSource(t.source) && <span style={{ fontSize: 10, color: "#B49BFF" }}>✦</span>}
+                  </div>
+                  <MonoLabel className="truncate">
+                    {format(parseISO(t.transaction_date), "d MMM yyyy")} · {t.category}
+                  </MonoLabel>
+                </div>
+                <div className={cn("font-semibold shrink-0 money", isPayment ? "text-accent" : "text-foreground")}>
+                  {isPayment ? "-" : ""}
+                  {formatINR(t.amount)}
+                </div>
+              </li>
+            );
+          })}
           {cardTx.length === 0 && <li className="text-sm text-muted text-center py-6">No activity yet.</li>}
         </ul>
-      </Card>
+      </GlassCard>
     </div>
   );
 }
 
-function Stat({ label, value, tone }: { label: string; value: string; tone?: "danger" }) {
+function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <Card className="p-4">
-      <div className="text-xs text-muted mb-1.5">{label}</div>
-      <div className={cn("text-lg font-semibold", tone === "danger" && "text-danger")}>{value}</div>
-    </Card>
+    <GlassCard radius={16} padding="14px 16px">
+      <MonoLabel>{label}</MonoLabel>
+      <div className="text-lg font-semibold mt-1.5">{value}</div>
+    </GlassCard>
   );
 }
 

@@ -7,6 +7,8 @@ import { CategoryIcon } from "@/components/shared/categoryIcon";
 import { formatINR, cn } from "@/lib/utils";
 import { isAiSource, type Transaction } from "@/lib/types";
 import { TransactionDetail } from "@/components/transactions/TransactionDetail";
+import { CATEGORY_COLOR } from "@/lib/categoryColor";
+import { MonoLabel } from "@/components/ui/afl/MonoLabel";
 
 const LOW_CONFIDENCE = 0.6;
 
@@ -37,6 +39,8 @@ export function ActivityRow({
   const accountLabel = accounts.find((a) => a.id === transaction.account_id)?.name ?? creditCards.find((c) => c.id === transaction.credit_card_id)?.name;
   const needsReview = isAiSource(transaction.source) && (transaction.ai_confidence ?? 1) < LOW_CONFIDENCE;
 
+  const iconColor = CATEGORY_COLOR[transaction.category] ?? "#7C89B8";
+
   return (
     <div className="border-b border-border last:border-0">
       <button
@@ -45,12 +49,10 @@ export function ActivityRow({
         className="w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30 rounded-lg"
       >
         <span
-          className={cn(
-            "h-8 w-8 shrink-0 rounded-full flex items-center justify-center",
-            isCredit ? "bg-positive-soft text-positive" : isNeutral ? "bg-background text-muted" : "bg-accent-soft text-accent"
-          )}
+          className="flex shrink-0 items-center justify-center"
+          style={{ width: 34, height: 34, borderRadius: 11, background: `color-mix(in srgb, ${iconColor} 12%, transparent)` }}
         >
-          <CategoryIcon category={transaction.category} size={15} />
+          <CategoryIcon category={transaction.category} size={15} color={iconColor} />
         </span>
 
         <div className="min-w-0 flex-1">
@@ -63,10 +65,10 @@ export function ActivityRow({
               </span>
             )}
           </div>
-          <div className="text-xs text-muted truncate">
+          <MonoLabel className="truncate">
             {transaction.category}
             {accountLabel ? ` · ${accountLabel}` : ""}
-          </div>
+          </MonoLabel>
         </div>
 
         <div className="text-right shrink-0">
@@ -80,7 +82,20 @@ export function ActivityRow({
 
       <div className={cn("grid transition-[grid-template-rows] duration-300 ease-out", expanded ? "grid-rows-[1fr]" : "grid-rows-[0fr]")}>
         <div className="overflow-hidden">
-          <div className="px-3.5 pb-4 pt-1">{expanded && <TransactionDetail transaction={transaction} balanceAfter={balanceAfter} />}</div>
+          <div className="px-3 pb-3 pt-1">
+            {expanded && (
+              <div
+                style={{
+                  borderRadius: 20,
+                  padding: "16px 16px 14px",
+                  background: "rgba(156,140,255,0.06)",
+                  border: "1px solid rgba(156,140,255,0.22)",
+                }}
+              >
+                <TransactionDetail transaction={transaction} balanceAfter={balanceAfter} />
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

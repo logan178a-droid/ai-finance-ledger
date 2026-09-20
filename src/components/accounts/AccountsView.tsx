@@ -6,7 +6,9 @@ import { useRouter } from "next/navigation";
 import { useStore } from "@/lib/store/StoreContext";
 import { getAccountBalance, getCreditCardStatus, getRecentTransactions } from "@/lib/ledger/uiAdapters";
 import { formatINR } from "@/lib/utils";
-import { Card } from "@/components/ui/Card";
+import { accountSwatch } from "@/lib/categoryColor";
+import { GlassCard } from "@/components/ui/afl/GlassCard";
+import { MonoLabel } from "@/components/ui/afl/MonoLabel";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { useToast } from "@/components/ui/Toast";
@@ -76,7 +78,7 @@ export function AccountsView() {
       </div>
 
       {isEmpty ? (
-        <Card className="p-8 text-center">
+        <GlassCard radius={20} padding="32px 24px" className="text-center">
           <p className="text-sm font-medium mb-1">No accounts yet</p>
           <p className="text-sm text-muted mb-4">
             Add your first bank account, cash wallet, or credit card to start tracking real transactions.
@@ -89,7 +91,7 @@ export function AccountsView() {
               <Plus size={14} /> Add credit card
             </Button>
           </div>
-        </Card>
+        </GlassCard>
       ) : (
         <>
           {banks.length > 0 && (
@@ -179,39 +181,49 @@ function AccountCard({
     3
   );
 
+  const swatch = accountSwatch(account.name);
+
   return (
-    <Card className="p-5 group relative">
-      <button
-        onClick={(e) => {
-          e.preventDefault();
-          onDelete();
-        }}
-        aria-label={`Remove ${account.name}`}
-        className="absolute top-4 right-4 p-1.5 rounded-lg text-muted hover:text-danger hover:bg-negative-soft opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity"
-      >
-        <Trash2 size={14} />
-      </button>
-      <div className="flex items-start justify-between mb-4 pr-8">
-        <div>
-          <div className="text-sm font-medium">{account.name}</div>
-          <div className="text-xs text-muted">{account.bank} {account.accountNumberMasked ?? ""}</div>
+    <Link href={`/accounts/${account.id}`} className="block">
+      <GlassCard radius={20} padding="18px 18px 16px" className="group">
+        <button
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onDelete();
+          }}
+          aria-label={`Remove ${account.name}`}
+          className="absolute top-4 right-4 p-1.5 rounded-lg text-muted hover:text-danger hover:bg-negative-soft opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity z-10"
+        >
+          <Trash2 size={14} />
+        </button>
+        <div className="flex items-center gap-3 mb-4 pr-8">
+          <span className="flex shrink-0 items-center justify-center" style={{ width: 34, height: 34, borderRadius: 11, background: swatch }}>
+            <Landmark size={15} color="#fff" strokeWidth={2} />
+          </span>
+          <div className="min-w-0 flex-1">
+            <div className="text-sm font-semibold truncate">{account.name}</div>
+            <MonoLabel className="truncate">{account.bank}</MonoLabel>
+          </div>
         </div>
-        <div className="text-lg font-semibold">{formatINR(balance)}</div>
-      </div>
-      {recent.length > 0 && (
-        <ul className="space-y-1.5 border-t border-border pt-3">
-          {recent.map((t: Transaction) => (
-            <li key={t.id} className="flex items-center justify-between text-xs text-muted">
-              <span className="flex items-center gap-1.5">
-                <CategoryIcon category={t.category} size={12} />
-                {t.description}
-              </span>
-              <span>{format(parseISO(t.transaction_date), "d MMM")}</span>
-            </li>
-          ))}
-        </ul>
-      )}
-    </Card>
+        <div className="money text-2xl font-extrabold mb-3" style={{ letterSpacing: "-0.01em" }}>
+          {formatINR(balance)}
+        </div>
+        {recent.length > 0 && (
+          <ul className="space-y-1.5 border-t border-border pt-3">
+            {recent.map((t: Transaction) => (
+              <li key={t.id} className="flex items-center justify-between text-xs text-muted">
+                <span className="flex items-center gap-1.5">
+                  <CategoryIcon category={t.category} size={12} />
+                  {t.description}
+                </span>
+                <span>{format(parseISO(t.transaction_date), "d MMM")}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </GlassCard>
+    </Link>
   );
 }
 
@@ -226,7 +238,7 @@ function CreditCardMiniCard({
 }) {
   const status = getCreditCardStatus(card, transactions);
   return (
-    <Card className="p-5 hover:border-accent/40 transition-colors group relative">
+    <GlassCard radius={20} padding="18px 18px 16px" className="group">
       <button
         onClick={(e) => {
           e.preventDefault();
@@ -239,18 +251,26 @@ function CreditCardMiniCard({
         <Trash2 size={14} />
       </button>
       <Link href={`/credit-cards/${card.id}`} className="block">
-        <div className="flex items-start justify-between mb-3 pr-8">
-          <div>
-            <div className="text-sm font-medium">{card.name}</div>
-            <div className="text-xs text-muted">{card.bank}</div>
+        <div className="flex items-center gap-3 mb-3.5 pr-8">
+          <span
+            className="flex shrink-0 items-center justify-center"
+            style={{ width: 34, height: 34, borderRadius: 11, background: "rgba(255,143,160,0.12)" }}
+          >
+            <CardIcon size={15} color="var(--negative)" strokeWidth={2} />
+          </span>
+          <div className="min-w-0 flex-1">
+            <div className="text-sm font-semibold truncate">{card.name}</div>
+            <MonoLabel className="truncate">{card.bank}</MonoLabel>
           </div>
-          <div className="text-lg font-semibold text-danger">{formatINR(status.currentOutstanding)}</div>
         </div>
-        <div className="flex items-center justify-between text-xs text-muted">
-          <span>Available: {formatINR(status.availableCredit)}</span>
-          <span>Due {format(parseISO(status.dueDate), "d MMM")}</span>
+        <div className="money text-xl font-extrabold mb-2" style={{ color: "var(--negative)", letterSpacing: "-0.01em" }}>
+          {formatINR(status.currentOutstanding)}
+        </div>
+        <div className="flex items-center justify-between">
+          <MonoLabel>Available {formatINR(status.availableCredit, { compact: true })}</MonoLabel>
+          <MonoLabel>Due {format(parseISO(status.dueDate), "d MMM")}</MonoLabel>
         </div>
       </Link>
-    </Card>
+    </GlassCard>
   );
 }

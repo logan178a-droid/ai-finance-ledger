@@ -33,7 +33,7 @@ const ICONS: Record<Category, LucideIcon> = {
   Other: Wallet,
 };
 
-export function CategoryIcon({ category, size = 16, className }: { category: Category; size?: number; className?: string }) {
+export function CategoryIcon({ category, size = 16, className, color, strokeWidth = 2 }: { category: Category; size?: number; className?: string; color?: string; strokeWidth?: number }) {
   const Icon = ICONS[category] ?? Wallet;
-  return <Icon size={size} className={className} />;
+  return <Icon size={size} className={className} color={color} strokeWidth={strokeWidth} />;
 }

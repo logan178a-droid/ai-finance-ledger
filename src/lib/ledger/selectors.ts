@@ -113,6 +113,23 @@ export function getBankAndCashBalance(snap: LedgerSnapshot) {
   return { bank: round2(bank), cash: round2(cash), investments: round2(investments) };
 }
 
+/** Bank+cash balance trend across recent months — real per-account math, filtered by date, not a fabricated series. Used for the Home Total Balance sparkline/growth badge. */
+export function getBankCashTrend(snap: LedgerSnapshot, monthsBack = 6): { label: string; value: number }[] {
+  const points: { label: string; value: number }[] = [];
+  const now = new Date();
+  for (let i = monthsBack - 1; i >= 0; i--) {
+    const asOf = new Date(now.getFullYear(), now.getMonth() - i + 1, 0);
+    const txUpToDate = snap.ledgerTx.filter((t) => parseISO(t.transactionDate) <= asOf);
+    let total = 0;
+    for (const a of snap.ledgerAccounts) {
+      if (a.type !== "bank" && a.type !== "cash") continue;
+      total += computeAccountBalance(a, txUpToDate);
+    }
+    points.push({ label: asOf.toLocaleDateString("en-IN", { month: "short" }), value: round2(total) });
+  }
+  return points;
+}
+
 export function getCreditCardStatus(snap: LedgerSnapshot, cardId: string): CreditCardStatus | undefined {
   const card = snap.ledgerCards.find((c) => c.id === cardId);
   if (!card) return undefined;

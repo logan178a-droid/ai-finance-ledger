@@ -13,6 +13,7 @@ import { useToast } from "@/components/ui/Toast";
 import { KNOWN_CATEGORIES } from "@/lib/ai/parseTransaction";
 import { mostRecentStatementDate } from "@/lib/ledger/ledgerEngine";
 import { CATEGORY_SUBCATEGORIES, SOURCE_LABEL, isAiSource, type Transaction, type TransactionType } from "@/lib/types";
+import { MonoLabel } from "@/components/ui/afl/MonoLabel";
 
 const TYPE_LABEL: Record<TransactionType, string> = {
   expense: "Expense",
@@ -113,64 +114,65 @@ export function TransactionDetail({
 
   return (
     <div className="space-y-3.5 text-sm">
-      <Detail label="Description" value={transaction.description} />
-      {transaction.merchant && <Detail label="Merchant" value={transaction.merchant} />}
-      <Detail label="Category" value={transaction.category} />
-      {transaction.subcategory && <Detail label="Subcategory" value={transaction.subcategory} />}
+      <div className="flex items-baseline justify-between gap-3">
+        <span className="text-sm font-semibold truncate">{transaction.description}</span>
+        <span className="money text-base font-bold shrink-0">{formatINR(transaction.amount)}</span>
+      </div>
+      <div style={{ height: 1, background: "var(--border)" }} />
 
-      {transaction.transaction_type === "transfer" ? (
-        <>
-          <Detail label="Transfer From" value={account?.name ?? "—"} />
-          <Detail label="Transfer To" value={transferToAccount?.name ?? "—"} />
-          <Detail label="Transfer Amount" value={formatINR(transaction.amount)} />
-          {transaction.transfer_id && <Detail label="Transfer ID" value={transaction.transfer_id.slice(0, 8)} mono />}
-        </>
-      ) : (
-        <>
+      <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+        {transaction.merchant && <Detail label="Merchant" value={transaction.merchant} />}
+        <Detail label="Category" value={transaction.category} />
+        {transaction.subcategory && <Detail label="Subcategory" value={transaction.subcategory} />}
+
+        {transaction.transaction_type === "transfer" ? (
+          <>
+            <Detail label="Transfer From" value={account?.name ?? "—"} />
+            <Detail label="Transfer To" value={transferToAccount?.name ?? "—"} />
+            <Detail label="Transfer Amount" value={formatINR(transaction.amount)} />
+            {transaction.transfer_id && <Detail label="Transfer ID" value={transaction.transfer_id.slice(0, 8)} mono />}
+          </>
+        ) : (
           <Detail label={transaction.transaction_type === "income" ? "Destination Account" : "Account"} value={account?.name ?? card?.name ?? "—"} />
-          <Detail label="Payment Method" value={account?.name ?? card?.name ?? "—"} />
-        </>
-      )}
+        )}
 
-      {transaction.transaction_type === "income" && transaction.merchant && <Detail label="Income Source" value={transaction.merchant} />}
+        {transaction.transaction_type === "income" && transaction.merchant && <Detail label="Income Source" value={transaction.merchant} />}
 
-      {transaction.category === "Investment" && (
-        <>
-          {transaction.subcategory && <Detail label="Investment Type" value={transaction.subcategory} />}
-          {transaction.merchant && <Detail label="Platform" value={transaction.merchant} />}
-          <Detail label="Asset" value={transaction.description} />
-        </>
-      )}
+        {transaction.category === "Investment" && (
+          <>
+            {transaction.subcategory && <Detail label="Investment Type" value={transaction.subcategory} />}
+            {transaction.merchant && <Detail label="Platform" value={transaction.merchant} />}
+          </>
+        )}
 
-      {card && statementInfo && (
-        <>
-          <Detail label="Credit Card" value={card.name} />
-          <Detail label="Statement Cycle" value={statementInfo.cycleLabel} />
-          <Detail
-            label="Statement Status"
-            value={statementInfo.status}
-            tone={statementInfo.status === "Unbilled" ? "warning" : undefined}
-          />
-          <Detail label="Due Date" value={statementInfo.dueDate} />
-        </>
-      )}
+        {card && statementInfo && (
+          <>
+            <Detail label="Credit Card" value={card.name} />
+            <Detail label="Statement Cycle" value={statementInfo.cycleLabel} />
+            <Detail
+              label="Statement Status"
+              value={statementInfo.status}
+              tone={statementInfo.status === "Unbilled" ? "warning" : undefined}
+            />
+            <Detail label="Due Date" value={statementInfo.dueDate} />
+          </>
+        )}
 
-      <Detail label="Transaction Type" value={TYPE_LABEL[transaction.transaction_type]} />
-      <Detail label="Date" value={format(parseISO(transaction.transaction_date), "d MMM yyyy")} />
-      {balanceAfter !== undefined && <Detail label="Running Balance" value={formatINR(balanceAfter)} />}
-
-      <div className="pt-2 border-t border-border space-y-3.5">
-        <Detail label="Added by" value={SOURCE_LABEL[transaction.source]} />
+        <Detail label="Transaction Type" value={TYPE_LABEL[transaction.transaction_type]} />
+        <Detail label="Date" value={format(parseISO(transaction.transaction_date), "d MMM yyyy")} />
+        {balanceAfter !== undefined && <Detail label="Running Balance" value={formatINR(balanceAfter)} />}
+        <Detail label="Source" value={SOURCE_LABEL[transaction.source]} />
         {isAiSource(transaction.source) && transaction.ai_confidence !== undefined && (
           <Detail label="AI Confidence" value={`${Math.round(transaction.ai_confidence * 100)}%`} />
         )}
-        {transaction.raw_text && (
-          <div>
-            <div className="text-xs text-muted mb-1.5">Original input</div>
-            <div className="rounded-xl bg-background border border-border p-3 text-sm italic">&ldquo;{transaction.raw_text}&rdquo;</div>
-          </div>
-        )}
       </div>
+
+      {transaction.raw_text && (
+        <div className="pt-1">
+          <MonoLabel className="mb-1.5">Original input</MonoLabel>
+          <div className="rounded-xl bg-background border border-border p-3 text-sm italic">&ldquo;{transaction.raw_text}&rdquo;</div>
+        </div>
+      )}
 
       <div className="flex gap-2 pt-2">
         {EDITABLE_TYPES.has(transaction.transaction_type) ? (
@@ -182,7 +184,12 @@ export function TransactionDetail({
             {transaction.transaction_type === "transfer" ? "Transfers" : "Credit card payments"} can&rsquo;t be edited — delete and re-enter if needed.
           </span>
         )}
-        <Button variant="secondary" size="sm" onClick={() => setConfirmingDelete(true)} className="text-danger hover:text-danger">
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={() => setConfirmingDelete(true)}
+          style={{ background: "rgba(255,143,160,0.10)", borderColor: "rgba(255,143,160,0.28)", color: "var(--negative)" }}
+        >
           <Trash2 size={13} /> Delete
         </Button>
         {onClose && (
@@ -227,9 +234,9 @@ function monthDayOnOrAfter(from: Date, day: number): Date {
 
 function Detail({ label, value, mono, tone }: { label: string; value: string; mono?: boolean; tone?: "warning" }) {
   return (
-    <div className="flex items-center justify-between gap-3">
-      <span className="text-xs text-muted shrink-0">{label}</span>
-      <span className={cn("font-medium text-right truncate", mono && "font-mono text-xs", tone === "warning" && "text-warning")}>{value}</span>
+    <div className="min-w-0">
+      <MonoLabel>{label}</MonoLabel>
+      <div className={cn("font-medium truncate mt-0.5", mono && "font-mono text-xs", tone === "warning" && "text-warning")}>{value}</div>
     </div>
   );
 }
